@@ -1,0 +1,214 @@
+{
+  "revision": "native-curves-1",
+  "source_sha256": "3e3410eaf5f091eea86c5844b64320eaa42fd7e80c38185a5a25b01fe6db1a0f",
+  "fiberCount": 787615,
+  "strideFloats": 13,
+  "groups": [
+    {
+      "sourceName": "Bear blanket | cream oval muzzle",
+      "offset": 0,
+      "count": 926,
+      "originalCount": 926
+    },
+    {
+      "sourceName": "Bear blanket | hollow bear hood",
+      "offset": 926,
+      "count": 52836,
+      "originalCount": 52836
+    },
+    {
+      "sourceName": "Bear blanket | inset ear fleece",
+      "offset": 53762,
+      "count": 684,
+      "originalCount": 684
+    },
+    {
+      "sourceName": "Bear blanket | inset ear fleece.001",
+      "offset": 54446,
+      "count": 684,
+      "originalCount": 684
+    },
+    {
+      "sourceName": "Bear blanket | loosely folded continuous cloth",
+      "offset": 55130,
+      "count": 140227,
+      "originalCount": 140227
+    },
+    {
+      "sourceName": "Bear blanket | round bear ear",
+      "offset": 195357,
+      "count": 2421,
+      "originalCount": 2421
+    },
+    {
+      "sourceName": "Bear blanket | round bear ear.001",
+      "offset": 197778,
+      "count": 2421,
+      "originalCount": 2421
+    },
+    {
+      "sourceName": "Bear blanket | soft opening roll",
+      "offset": 200199,
+      "count": 7322,
+      "originalCount": 7322
+    },
+    {
+      "sourceName": "Bear blanket | soft side binding",
+      "offset": 207521,
+      "count": 3391,
+      "originalCount": 3391
+    },
+    {
+      "sourceName": "Bear blanket | soft side binding.001",
+      "offset": 210912,
+      "count": 3249,
+      "originalCount": 3249
+    },
+    {
+      "sourceName": "Bear blanket | upper wavy stitched hem",
+      "offset": 214161,
+      "count": 3275,
+      "originalCount": 3275
+    },
+    {
+      "sourceName": "Jiji | Little oval beak",
+      "offset": 217436,
+      "count": 2085,
+      "originalCount": 2085
+    },
+    {
+      "sourceName": "Jiji | Little wing L",
+      "offset": 219521,
+      "count": 6285,
+      "originalCount": 6285
+    },
+    {
+      "sourceName": "Jiji | Little wing R",
+      "offset": 225806,
+      "count": 6285,
+      "originalCount": 6285
+    },
+    {
+      "sourceName": "Jiji | Round head",
+      "offset": 232091,
+      "count": 73492,
+      "originalCount": 73492
+    },
+    {
+      "sourceName": "Jiji | Round sitting body",
+      "offset": 305583,
+      "count": 49007,
+      "originalCount": 49007
+    },
+    {
+      "sourceName": "Jiji | Seated orange foot L",
+      "offset": 354590,
+      "count": 3976,
+      "originalCount": 3976
+    },
+    {
+      "sourceName": "Jiji | Seated orange foot R",
+      "offset": 358566,
+      "count": 3976,
+      "originalCount": 3976
+    },
+    {
+      "sourceName": "Mifen | Floppy ear L",
+      "offset": 362542,
+      "count": 10274,
+      "originalCount": 10274
+    },
+    {
+      "sourceName": "Mifen | Floppy ear R",
+      "offset": 372816,
+      "count": 10274,
+      "originalCount": 10274
+    },
+    {
+      "sourceName": "Mifen | Pompom tail",
+      "offset": 383090,
+      "count": 2096,
+      "originalCount": 2096
+    },
+    {
+      "sourceName": "Mifen | Small pear body",
+      "offset": 385186,
+      "count": 26039,
+      "originalCount": 26039
+    },
+    {
+      "sourceName": "Mifen | Soft cheek head",
+      "offset": 411225,
+      "count": 48730,
+      "originalCount": 48730
+    },
+    {
+      "sourceName": "Mifen | Tiny foot L",
+      "offset": 459955,
+      "count": 3516,
+      "originalCount": 3516
+    },
+    {
+      "sourceName": "Mifen | Tiny foot R",
+      "offset": 463471,
+      "count": 3516,
+      "originalCount": 3516
+    },
+    {
+      "sourceName": "Mifen | Tucked paw L",
+      "offset": 466987,
+      "count": 3812,
+      "originalCount": 3812
+    },
+    {
+      "sourceName": "Mifen | Tucked paw R",
+      "offset": 470799,
+      "count": 3812,
+      "originalCount": 3812
+    },
+    {
+      "sourceName": "Teddy rug | bear silhouette bound edge",
+      "offset": 474611,
+      "count": 148506,
+      "originalCount": 148506
+    },
+    {
+      "sourceName": "Teddy rug | biscuit plush face",
+      "offset": 623117,
+      "count": 130792,
+      "originalCount": 130792
+    },
+    {
+      "sourceName": "Teddy rug | cream inner ear 0",
+      "offset": 753909,
+      "count": 9091,
+      "originalCount": 9091
+    },
+    {
+      "sourceName": "Teddy rug | cream inner ear 1",
+      "offset": 763000,
+      "count": 9091,
+      "originalCount": 9091
+    },
+    {
+      "sourceName": "Teddy rug | soft cream muzzle",
+      "offset": 772091,
+      "count": 15524,
+      "originalCount": 15524
+    }
+  ],
+  "binaryParts": [
+    "fibers-00.bin",
+    "fibers-01.bin",
+    "fibers-02.bin",
+    "fibers-03.bin",
+    "fibers-04.bin",
+    "fibers-05.bin",
+    "fibers-06.bin",
+    "fibers-07.bin",
+    "fibers-08.bin",
+    "fibers-09.bin"
+  ],
+  "binaryByteLength": 40955980,
+  "binarySha256": "58170b18777349278f67b5640521b928ad27448133b4ab451c4ecd3d6e79f633"
+}

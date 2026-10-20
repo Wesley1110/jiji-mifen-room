@@ -1,0 +1,67 @@
+{
+  "source": "v11",
+  "source_sha256": "3e3410eaf5f091eea86c5844b64320eaa42fd7e80c38185a5a25b01fe6db1a0f",
+  "meshes": 558,
+  "triangles": 1391792,
+  "glb_bytes": 4199796,
+  "bounds": {
+    "left": -10.8,
+    "right": 5.6,
+    "front": -10.3,
+    "back": 3.3,
+    "height": 8.2
+  },
+  "conversion": "Original meshes and placement; native-root curved plush pile with shape-aware feature grooming, gentle root shading and stable strand shadow sampling. Always-on fur, WASD and wheel flight, bed blanket preset, translucent menus.",
+  "material_revision": "plush-4",
+  "scene_revision": "room-details-4",
+  "bed_overlay": "Procedural hinoki-style cloud bed with thick milk-tea mattress, separate pillow top, filled oat and rose pillows, and a volumetric dusty-rose duvet with woven normals, sewn channels and a turned-back oat fold. Toys and matching fur translate together. Original GLB and native fiber data are preserved.",
+  "fiber_count": 787615,
+  "fiber_groups": 32,
+  "fiber_bytes": 40955980,
+  "render_fiber_count_max": 2286942,
+  "bedside_accessories": {
+    "revision": "slippers-4",
+    "pairs": 2,
+    "shoes": 4,
+    "colors": ["oatmeal", "dusty rose"],
+    "placement": "floor left of bed beside teddy rug",
+    "design": "plain closed-toe, open-heel indoor slippers with padded footbeds and thin binding",
+    "character_features": false,
+    "bows": {"count": 2, "color": "rose pink", "pair": "dusty rose"},
+    "additional_fibers": 0
+  },
+  "door": {
+    "revision": "hinoki-door-3",
+    "design": "arched pale hinoki timber, moon and star inlays, brass flower escutcheon",
+    "interaction": "click or tap either doorknob to open and close; camera dragging does not toggle",
+    "swing_degrees": 88.2,
+    "duration_ms": 1050,
+    "entry_recess": false,
+    "hallway": {
+      "revision": "daylight-hallway-2",
+      "depth": 9.1,
+      "width": 11.2,
+      "side_passage": true,
+      "garden_window": true,
+      "camera_access": "WASD, flight wheel and touch directions can enter through the open door and return",
+      "walkable": true
+    }
+  },
+  "navigation": {
+    "revision": "connected-hallway-1",
+    "areas": ["bedroom", "doorway", "hallway", "side passage"],
+    "door_collision": true,
+    "wall_and_window_boundaries": true,
+    "door_close_clearance_guard": true
+  },
+  "menu": {
+    "states": [
+      "full",
+      "compact",
+      "hidden"
+    ],
+    "restore": "Visible restore button or M key",
+    "storage": "localStorage when available",
+    "shift_hint": "Visible in full and compact menus and help"
+  }
+}
