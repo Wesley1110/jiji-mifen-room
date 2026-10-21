@@ -1,6 +1,6 @@
 import * as THREE from 'three/webgpu';
-import {createBearPaw} from './bear-paw.js';
-import {PAT_DURATION, sampleDoublePat} from './paw-motion.js';
+import {createBearPaw} from './bear-paw.js?revision=reference-paw-3';
+import {PAT_DURATION, sampleDoublePat, advanceDoublePat} from './paw-motion.js?revision=reference-paw-3';
 
 const REACH = 2.4;
 const visible = object => { for (let p = object; p; p = p.parent) if (!p.visible) return false; return true; };
@@ -13,7 +13,7 @@ export function createPetting({scene, root, plush, camera, canvas, getMode, setM
   const normalMatrix = new THREE.Matrix3(), basis = new THREE.Matrix4();
   const aim = new THREE.Vector2(innerWidth / 2, innerHeight / 2), up = new THREE.Vector3(0, 1, 0);
   const idle = new THREE.Vector3(), desired = new THREE.Vector3(), idleQ = new THREE.Quaternion(), desiredQ = new THREE.Quaternion();
-  const roll = new THREE.Quaternion().setFromEuler(new THREE.Euler(-.1, 2.85, -.22));
+  const roll = new THREE.Quaternion().setFromEuler(new THREE.Euler(-.12, 2.65, -.30));
   const right = new THREE.Vector3(), vertical = new THREE.Vector3(), normal = new THREE.Vector3(), tangent = new THREE.Vector3();
   const blockerMeshes = [], heads = {};
   scene.updateMatrixWorld(true);
@@ -79,7 +79,7 @@ export function createPetting({scene, root, plush, camera, canvas, getMode, setM
     tangent.copy(up).addScaledVector(hit.normal, -up.dot(hit.normal));
     if (tangent.lengthSq() < .01) tangent.set(1, 0, 0).addScaledVector(hit.normal, -hit.normal.x);
     tangent.normalize();
-    animation = {hit, start: performance.now(), tangent: tangent.clone(), beats: new Set()};
+    animation = {hit, elapsed: 0, tangent: tangent.clone(), beats: new Set()};
     sequenceCount++;
     lastOwner = hit.owner; onInteract(); return true;
   }
@@ -91,7 +91,7 @@ export function createPetting({scene, root, plush, camera, canvas, getMode, setM
     restPosition(idle);
     idleQ.copy(camera.quaternion).multiply(roll); desired.copy(idle); desiredQ.copy(idleQ);
     if (animation) {
-      const a = animation, seconds = (time - a.start) / 1000;
+      const a = animation, seconds = a.elapsed = advanceDoublePat(a.elapsed,dt);
       if (seconds > PAT_DURATION) { completedSequences++; animation = null; const next = pending.shift(); if (next) start(next); }
       else if (camera.position.distanceTo(a.hit.point) > REACH + .12) { animation = null; pending.length = 0; }
       else {
@@ -104,7 +104,7 @@ export function createPetting({scene, root, plush, camera, canvas, getMode, setM
           normal.copy(surface.normal || surface.face.normal).applyMatrix3(normalMatrix).normalize();
           if (normal.dot(a.hit.normal) < 0) normal.negate();
           const {pressure, beat, touching, envelope, lift} = sampleDoublePat(seconds);
-          desired.copy(surface.point).addScaledVector(normal, .103 + lift - .018 * pressure);
+          desired.copy(surface.point).addScaledVector(normal, .130 + lift - .018 * pressure);
           right.set(1, 0, 0).applyQuaternion(camera.quaternion).addScaledVector(normal, -right.dot(normal)).normalize();
           vertical.crossVectors(normal, right).normalize(); basis.makeBasis(right, vertical, normal); desiredQ.setFromRotationMatrix(basis);
           desired.lerpVectors(idle, desired, envelope); desiredQ.slerp(idleQ, 1 - envelope);
@@ -121,9 +121,9 @@ export function createPetting({scene, root, plush, camera, canvas, getMode, setM
     }
     const following = 1 - Math.exp(-30 * dt); hand.root.position.lerp(desired, following); hand.root.quaternion.slerp(desiredQ, following);
     hand.root.updateMatrixWorld(true);
-    const wrist=new THREE.Vector3(0,-.235,.006).applyMatrix4(hand.root.matrixWorld);
+    const wrist=new THREE.Vector3(0,-.265,.007).applyMatrix4(hand.root.matrixWorld);
     const elbow=new THREE.Vector3(Math.min(.5,camera.aspect*.43),-.8,-.35).applyQuaternion(camera.quaternion).add(camera.position);
-    const armDirection=wrist.clone().sub(elbow);hand.arm.visible=true;hand.arm.position.copy(wrist).add(elbow).multiplyScalar(.5);hand.arm.scale.set(1,armDirection.length(),1);hand.arm.quaternion.setFromUnitVectors(up,armDirection.normalize());
+    const armDirection=wrist.clone().sub(elbow);hand.arm.visible=true;hand.arm.position.copy(wrist).add(elbow).multiplyScalar(.5);hand.arm.scale.set(1,armDirection.length(),1);hand.arm.userData.setLength(armDirection.length());hand.arm.quaternion.setFromUnitVectors(up,armDirection.normalize());
     plush.userData.touch.update(dt, time / 1000);
     if (time - lastHover > 90) {
       lastHover = time; lastHit = aimedHit();

@@ -1,4 +1,6 @@
 export const PAT_DURATION = 1.8;
+// Advance with rendered frames so a slow frame cannot skip either contact.
+export const advanceDoublePat = (elapsed,dt) => elapsed + Math.max(0,Math.min(dt,.045));
 const smooth = value => { const t=Math.max(0,Math.min(1,value));return t*t*(3-2*t); };
 
 // Exactly two separate press/lift cycles, followed by a gentle retraction.
