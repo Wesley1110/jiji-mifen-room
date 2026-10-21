@@ -7,9 +7,9 @@ import {upgradeFairytaleBed} from './bed.js?revision=storybook-bed-2';
 import {placeBedOccupants} from './bedding.js?revision=bedding-2';
 import {initMenu} from './menu.js?revision=room-details-1';
 import {createBedsideSlippers} from './house-slippers.js?revision=room-details-4';
-import {createFairytaleDoor,bindDoorInteraction} from './door.js?revision=hand-touch-1';
+import {createFairytaleDoor,bindDoorInteraction} from './door.js?revision=plump-paw-4';
 import {createNavigation} from './navigation.js?revision=room-details-4';
-import {createPetting} from './petting.js?revision=reference-paw-3';
+import {createPetting} from './petting.js?revision=plump-paw-4';
 
 const $=id=>document.getElementById(id), viewport=$('room');
 const menu=initMenu();
@@ -96,11 +96,11 @@ async function init(){
  placeBedOccupants(gltf.scene,plush);
  const slippers=createBedsideSlippers(cloth);scene.add(slippers);meshCount+=slippers.userData.meshCount;
  door=createFairytaleDoor(gltf.scene,{canClose:()=>navigation.canClose(camera.position)});scene.add(door.group);meshCount+=door.group.userData.meshCount-door.group.userData.replacedMeshes;
- bindDoorInteraction({door,scene,camera,canvas:renderer.domElement,onInteract:interact});
- petting=createPetting({scene,root:gltf.scene,plush,camera,canvas:renderer.domElement,getMode:()=>mode,setMode,onInteract:interact});
+ const doorInteraction=bindDoorInteraction({door,scene,camera,canvas:renderer.domElement,onInteract:interact});
+ petting=createPetting({scene,root:gltf.scene,plush,camera,canvas:renderer.domElement,getMode:()=>mode,setMode,onInteract:interact,isSceneControl:doorInteraction.hitTest});
  setPressed('float',floating);await renderer.compileAsync(scene,camera);
  ready=true;fpsTime=performance.now();renderer.setAnimationLoop(animate);$('loading').hidden=true;
- window.__room={camera,orbit,renderer,scene,goTo,setMode,keys,door,navigation,petting,get status(){return {ready,revision:'reference-paw-3',furRevision:'plush-touch-1',petting:petting.status,bed:bed.userData,slippers:slippers.userData,door:door.group.userData,navigation:{area:navigation.region(camera.position),hallwayAccess:true},menu:menu.state,backend:actualGPU?'WebGPU':'WebGL2',mode,meshCount,fiberCount,floating,position:camera.position.toArray(),wheelTravel,renderInfo:renderer.info.render};}};
+ window.__room={camera,orbit,renderer,scene,goTo,setMode,keys,door,navigation,petting,get status(){return {ready,revision:'plump-paw-4',furRevision:'plush-touch-1',petting:petting.status,bed:bed.userData,slippers:slippers.userData,door:door.group.userData,navigation:{area:navigation.region(camera.position),hallwayAccess:true},menu:menu.state,backend:actualGPU?'WebGPU':'WebGL2',mode,meshCount,fiberCount,floating,position:camera.position.toArray(),wheelTravel,renderInfo:renderer.info.render};}};
  window.dispatchEvent(new Event('room-ready'));
 }
 function animate(time){

@@ -112,11 +112,11 @@ export function createBearPaw() {
     pile(root,g,{count:q.center?12000:3500,length:.0032,width:.00030,color:coffee,velour:true});
   }
   // Rounded, thick forearm overlaps the stuffed wrist and shares the same curly pile.
-  const profile=[new THREE.Vector2(0,-.5),new THREE.Vector2(.15,-.495),new THREE.Vector2(.186,-.46),new THREE.Vector2(.188,-.36),new THREE.Vector2(.177,-.05),new THREE.Vector2(.157,.25),new THREE.Vector2(.144,.43),new THREE.Vector2(.128,.5),new THREE.Vector2(0,.5)];
+  const profile=[new THREE.Vector2(0,-.5),new THREE.Vector2(.22,-.495),new THREE.Vector2(.263,-.46),new THREE.Vector2(.278,-.36),new THREE.Vector2(.271,-.16),new THREE.Vector2(.244,.06),new THREE.Vector2(.204,.27),new THREE.Vector2(.166,.43),new THREE.Vector2(.142,.5),new THREE.Vector2(0,.5)];
   const armGeometry=new THREE.LatheGeometry(profile,48),arm=new THREE.Mesh(armGeometry,coat);arm.name='thick cream teddy forearm';arm.userData.isHand=true;arm.visible=false;
-  const stretch=uniform(1);pile(arm,armGeometry,{count:100000,length:.029,width:.00095,color:cream,stretch});
-  pile(arm,armGeometry,{count:10000,length:.03,width:.0017,color:cream,stretch,tuft:true});
+  const stretch=uniform(1);pile(arm,armGeometry,{count:135000,length:.029,width:.00095,color:cream,stretch});
+  pile(arm,armGeometry,{count:14000,length:.03,width:.0017,color:cream,stretch,tuft:true});
   arm.userData.setLength=value=>{stretch.value=Math.max(.1,value);};
-  root.userData.design={reference:'cream curly teddy glove',fingers:3,sideThumb:true,padShape:'rounded bean',pile:'dense curls'};
+  root.userData.design={reference:'cream curly teddy glove',fingers:3,sideThumb:true,padShape:'rounded bean',pile:'dense curls',forearm:'plump tapered stuffing'};
   root.visible=false;root.scale.setScalar(.78);return {root,arm};
 }

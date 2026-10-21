@@ -125,5 +125,5 @@ export function bindDoorInteraction({door,scene,camera,canvas,onInteract}){
  document.addEventListener('pointerdown',()=>show(false,{}));
  addEventListener('keydown',()=>show(false,{}));
  addEventListener('blur',()=>{down=null;show(false,{});});
- return {get hovered(){return hover;}};
+ return {hitTest:hit,get hovered(){return hover;}};
 }

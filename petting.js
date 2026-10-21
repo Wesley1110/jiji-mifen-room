@@ -1,12 +1,12 @@
 import * as THREE from 'three/webgpu';
-import {createBearPaw} from './bear-paw.js?revision=reference-paw-3';
-import {PAT_DURATION, sampleDoublePat, advanceDoublePat} from './paw-motion.js?revision=reference-paw-3';
+import {createBearPaw} from './bear-paw.js?revision=plump-paw-4';
+import {PAT_DURATION, sampleDoublePat, advanceDoublePat} from './paw-motion.js?revision=plump-paw-4';
 
 const REACH = 2.4;
 const visible = object => { for (let p = object; p; p = p.parent) if (!p.visible) return false; return true; };
 function sourceName(object) { for (let p = object; p; p = p.parent) if (p.userData.sourceName) return p.userData.sourceName; return ''; }
 
-export function createPetting({scene, root, plush, camera, canvas, getMode, setMode, onInteract}) {
+export function createPetting({scene, root, plush, camera, canvas, getMode, setMode, onInteract, isSceneControl = () => false}) {
   const $ = id => document.getElementById(id);
   const hand = createBearPaw(); scene.add(hand.root,hand.arm);
   const ray = new THREE.Raycaster(), surfaceRay = new THREE.Raycaster(), pointer = new THREE.Vector2();
@@ -14,6 +14,7 @@ export function createPetting({scene, root, plush, camera, canvas, getMode, setM
   const aim = new THREE.Vector2(innerWidth / 2, innerHeight / 2), up = new THREE.Vector3(0, 1, 0);
   const idle = new THREE.Vector3(), desired = new THREE.Vector3(), idleQ = new THREE.Quaternion(), desiredQ = new THREE.Quaternion();
   const roll = new THREE.Quaternion().setFromEuler(new THREE.Euler(-.12, 2.65, -.30));
+  const airRoll = new THREE.Quaternion().setFromEuler(new THREE.Euler(-.18, 0, -.15));
   const right = new THREE.Vector3(), vertical = new THREE.Vector3(), normal = new THREE.Vector3(), tangent = new THREE.Vector3();
   const blockerMeshes = [], heads = {};
   scene.updateMatrixWorld(true);
@@ -24,8 +25,8 @@ export function createPetting({scene, root, plush, camera, canvas, getMode, setM
     blockerMeshes.push(o);
   });
   root.traverse(o => { const name = o.userData.sourceName || ''; if (/^(Jiji|Mifen) \|.*head/i.test(name)) heads[name.split(' |')[0]] = o; });
-  let enabled = false, animation = null, ownedPointer = null, lastHover = -Infinity;
-  const pending = []; let patCount = 0, sequenceCount = 0, completedSequences = 0;
+  let enabled = false, animation = null, clickCandidate = null, lastHover = -Infinity;
+  const pending = []; let patCount = 0, airPatCount = 0, contactPatCount = 0, sequenceCount = 0, completedSequences = 0;
   let lastHit = null, contacts = 0, lastOwner = null, contactNow = false;
   function restPosition(out) { return out.set(Math.min(.48,camera.aspect*.35),camera.aspect<.8?-.12:-.27,-1.1).applyQuaternion(camera.quaternion).add(camera.position); }
 
@@ -47,13 +48,13 @@ export function createPetting({scene, root, plush, camera, canvas, getMode, setM
     return pick(locked ? innerWidth / 2 : aim.x, locked ? innerHeight / 2 : aim.y);
   }
   function message(hit) {
-    if (animation) return (lastOwner === 'Jiji' ? '雞雞' : '米粉') + '，輕拍兩下';
-    if (hit && !hit.reachable) return '再靠近一點，才摸得到喔';
+    if (animation) return animation.kind === 'air' ? '熊掌向前，輕輕空拍兩下' : (lastOwner === 'Jiji' ? '雞雞' : '米粉') + '，輕拍兩下';
+    if (hit && !hit.reachable) return '點一下可空拍兩下 · 靠近才能碰到玩偶';
     if (hit) return '點一下，輕拍' + (hit.owner === 'Jiji' ? '雞雞' : '米粉') + '兩下';
-    return '點玩偶一次，熊掌輕拍兩下 · 右鍵拖曳轉向';
+    return '點一下，向前空拍兩下 · 拖曳轉向';
   }
   function setEnabled(value) {
-    enabled = !!value; animation = null; pending.length = 0; contactNow = false; plush.userData.touch.release();
+    enabled = !!value; stop();
     document.body.dataset.hand = enabled ? 'on' : 'off';
     if (enabled && getMode() !== 'fly') setMode('fly');
     $('handToggle').setAttribute('aria-pressed', String(enabled)); $('handToggle').classList.toggle('selected', enabled);
@@ -74,16 +75,19 @@ export function createPetting({scene, root, plush, camera, canvas, getMode, setM
     aim.set(innerWidth / 2, innerHeight / 2); lastHover = -Infinity; onInteract(); canvas.focus({preventScroll: true});
   }
   function start(hit) {
-    if (!enabled || getMode() !== 'fly' || !hit?.reachable) return false;
-    if (animation) { pending.push(hit); onInteract(); return true; }
-    tangent.copy(up).addScaledVector(hit.normal, -up.dot(hit.normal));
-    if (tangent.lengthSq() < .01) tangent.set(1, 0, 0).addScaledVector(hit.normal, -hit.normal.x);
-    tangent.normalize();
-    animation = {hit, elapsed: 0, tangent: tangent.clone(), beats: new Set()};
+    if (!enabled || getMode() !== 'fly') return false;
+    if (animation) { pending.push({hit}); onInteract(); return true; }
+    const contact = hit?.reachable && visible(hit.object) && camera.position.distanceTo(hit.point) <= REACH;
+    if (contact) {
+      tangent.copy(up).addScaledVector(hit.normal, -up.dot(hit.normal));
+      if (tangent.lengthSq() < .01) tangent.set(1, 0, 0).addScaledVector(hit.normal, -hit.normal.x);
+      tangent.normalize();
+    }
+    animation = {kind: contact ? 'contact' : 'air', hit: contact ? hit : null, elapsed: 0, tangent: tangent.clone(), beats: new Set()};
     sequenceCount++;
-    lastOwner = hit.owner; onInteract(); return true;
+    lastOwner = contact ? hit.owner : null; onInteract(); return true;
   }
-  function stop() { animation = null; pending.length = 0; contactNow = false; ownedPointer = null; plush.userData.touch.release(); }
+  function stop() { animation = null; pending.length = 0; contactNow = false; clickCandidate = null; plush.userData.touch.release(); }
   function update(time, dt) {
     contactNow = false;
     if (!enabled || getMode() !== 'fly') { hand.root.visible = false; hand.arm.visible=false; plush.userData.touch.update(dt, time / 1000); return; }
@@ -92,31 +96,37 @@ export function createPetting({scene, root, plush, camera, canvas, getMode, setM
     idleQ.copy(camera.quaternion).multiply(roll); desired.copy(idle); desiredQ.copy(idleQ);
     if (animation) {
       const a = animation, seconds = a.elapsed = advanceDoublePat(a.elapsed,dt);
-      if (seconds > PAT_DURATION) { completedSequences++; animation = null; const next = pending.shift(); if (next) start(next); }
-      else if (camera.position.distanceTo(a.hit.point) > REACH + .12) { animation = null; pending.length = 0; }
+      if (seconds > PAT_DURATION) { completedSequences++; animation = null; if (pending.length) start(pending.shift().hit); }
       else {
-        const probe = a.hit.point.clone();
-        surfaceRay.set(probe.clone().addScaledVector(a.hit.normal, .3), a.hit.normal.clone().negate()); surfaceRay.far = .7;
-        const surface = surfaceRay.intersectObject(a.hit.object, false)[0];
-        if (!surface) animation = null;
-        else {
+        const {pressure, beat, touching, envelope, lift} = sampleDoublePat(seconds);
+        let surface = null;
+        if (a.kind === 'contact' && visible(a.hit.object) && camera.position.distanceTo(a.hit.point) <= REACH + .12) {
+          surfaceRay.set(a.hit.point.clone().addScaledVector(a.hit.normal, .3), a.hit.normal.clone().negate()); surfaceRay.far = .7;
+          surface = surfaceRay.intersectObject(a.hit.object, false)[0];
+        }
+        if (!surface) { a.kind = 'air'; a.hit = null; lastOwner = null; }
+        if (a.kind === 'air') {
+          // A short camera-relative gesture never reaches toward a distant hit.
+          desired.set(Math.min(.38,camera.aspect*.28),(camera.aspect<.8?-.03:-.19)+.07*(1-pressure),-1.16-.22*pressure).applyQuaternion(camera.quaternion).add(camera.position);
+          desiredQ.copy(camera.quaternion).multiply(airRoll);
+          if (touching && !a.beats.has(beat)) { a.beats.add(beat); patCount++; airPatCount++; }
+        } else {
           normalMatrix.getNormalMatrix(surface.object.matrixWorld);
           normal.copy(surface.normal || surface.face.normal).applyMatrix3(normalMatrix).normalize();
           if (normal.dot(a.hit.normal) < 0) normal.negate();
-          const {pressure, beat, touching, envelope, lift} = sampleDoublePat(seconds);
           desired.copy(surface.point).addScaledVector(normal, .130 + lift - .018 * pressure);
           right.set(1, 0, 0).applyQuaternion(camera.quaternion).addScaledVector(normal, -right.dot(normal)).normalize();
           vertical.crossVectors(normal, right).normalize(); basis.makeBasis(right, vertical, normal); desiredQ.setFromRotationMatrix(basis);
-          desired.lerpVectors(idle, desired, envelope); desiredQ.slerp(idleQ, 1 - envelope);
           // No contact is applied until the visible palm actually arrives at the surface.
           const palmArrived = hand.root.position.distanceTo(desired) < .075;
           if (touching && palmArrived) {
             const direction = a.tangent.clone().negate();
             plush.userData.touch.press(a.hit.owner, surface.point.toArray(), normal.toArray(), direction.toArray(), .98 * pressure, time / 1000, .24);
             contactNow = true; contacts++;
-            if (!a.beats.has(beat)) { a.beats.add(beat); patCount++; }
+            if (!a.beats.has(beat)) { a.beats.add(beat); patCount++; contactPatCount++; }
           }
         }
+        desired.lerpVectors(idle, desired, envelope); desiredQ.slerp(idleQ, 1 - envelope);
       }
     }
     const following = 1 - Math.exp(-30 * dt); hand.root.position.lerp(desired, following); hand.root.quaternion.slerp(desiredQ, following);
@@ -135,20 +145,21 @@ export function createPetting({scene, root, plush, camera, canvas, getMode, setM
   $('handToggle').disabled = false; $('handToggle').onclick = () => { setEnabled(!enabled); canvas.focus({preventScroll: true}); };
   document.querySelectorAll('[data-pet-near]').forEach(b => b.onclick = () => near(b.dataset.petNear));
   canvas.addEventListener('pointerdown', event => {
+    clickCandidate = null;
     if (!enabled || getMode() !== 'fly' || event.button !== 0) return;
-    aim.set(event.clientX, event.clientY); const hit = aimedHit();
-    if (!start(hit)) return;
-    ownedPointer = event.pointerId; canvas.setPointerCapture(event.pointerId); canvas.focus({preventScroll: true});
-    event.preventDefault(); event.stopImmediatePropagation();
+    // Door controls keep priority; defer pats until release so drags remain camera gestures.
+    if (isSceneControl(event)) return;
+    aim.set(event.clientX, event.clientY);
+    clickCandidate = {id: event.pointerId, x: event.clientX, y: event.clientY, hit: aimedHit(), time: performance.now()};
   }, true);
   canvas.addEventListener('pointermove', event => {
     if (event.pointerType !== 'touch') aim.set(event.clientX, event.clientY);
-    if (ownedPointer === event.pointerId) { event.preventDefault(); event.stopImmediatePropagation(); }
+    if (clickCandidate?.id === event.pointerId && Math.hypot(event.clientX-clickCandidate.x,event.clientY-clickCandidate.y)>7) clickCandidate = null;
   }, true);
   canvas.addEventListener('pointerup', event => {
-    if (ownedPointer !== event.pointerId) return;
-    ownedPointer = null; if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
-    event.preventDefault(); event.stopImmediatePropagation();
+    if (clickCandidate?.id !== event.pointerId) return;
+    const click = clickCandidate; clickCandidate = null;
+    if (performance.now()-click.time < 700 && Math.hypot(event.clientX-click.x,event.clientY-click.y)<=7 && !isSceneControl(event)) start(click.hit);
   }, true);
   canvas.addEventListener('pointercancel', stop);
   addEventListener('blur', stop); document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
@@ -159,5 +170,5 @@ export function createPetting({scene, root, plush, camera, canvas, getMode, setM
   setEnabled(false);
   return {update, setEnabled, near, pick, hand: hand.root, arm:hand.arm,
     get enabled() { return enabled; },
-    get status() { return {enabled, action: 'pat', pawStyle: 'teddy', patsPerClick: 2, patCount, sequenceCount, completedSequences, queued: pending.length, animating: !!animation, contact: contactNow, lastOwner, contactCount: contacts, reach: REACH, field: plush.userData.touch.status}; }};
+    get status() { return {enabled, action: 'pat', pawStyle: 'teddy', patsPerClick: 2, patCount, airPatCount, contactPatCount, sequenceCount, completedSequences, queued: pending.length, animating: !!animation, animationKind: animation?.kind || null, contact: contactNow, lastOwner, contactCount: contacts, reach: REACH, field: plush.userData.touch.status}; }};
 }
