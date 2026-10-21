@@ -1,6 +1,7 @@
 import * as THREE from 'three/webgpu';
-import {attribute, cameraPosition, materialColor, mix, positionGeometry, transformNormalToView, uv} from 'three/tsl';
+import {attribute, cameraPosition, materialColor, mix, positionGeometry, transformNormalToView, uv, uniform, vec3, float} from 'three/tsl';
 import {loadFiberData} from './fiber-data.js';
+import {createFurContactState} from './fur-contact-state.js';
 
 // A continuous, low-contrast fiber nap. No raised beads or isolated bright blobs.
 export function makeFiberNap(){
@@ -40,6 +41,10 @@ export function softenFabric(material,nap){
 }
 
 export async function loadFineFur(root){
+ const contactState=createFurContactState();
+ const touchUniforms=Object.fromEntries(Object.keys(contactState.owners).map(owner=>[owner,contactState.owners[owner].map(()=>({
+  point:uniform(new THREE.Vector4(0,0,0,.22)),normal:uniform(new THREE.Vector3(0,0,1)),direction:uniform(new THREE.Vector3(0,-1,0)),pressure:uniform(0)
+ }))]));
  const [meta,buffer]=await loadFiberData();
  const raw=new Float32Array(buffer);
  if(raw.length!==meta.fiberCount*meta.strideFloats)throw Error('Incomplete fiber data');
@@ -127,20 +132,30 @@ export async function loadFineFur(root){
   const curl=t.mul(Math.PI*2).add(phase).sin().mul(.15).mul(t);
   const lean=t.mul(t).mul(.42).add(curl);
   const crossCurl=t.mul(Math.PI*1.5).add(phase).sin().mul(.13).mul(t);
-  const center=a.xyz.add(n.xyz.mul(n.w).mul(t)).add(v.xyz.mul(n.w).mul(lean)).add(b.mul(n.w).mul(crossCurl));
+  let compression=float(0),brush=vec3(0);
+  for(const touch of touchUniforms[item.sourceName.split(' |')[0]]||[]){
+   const falloff=float(1).sub(a.xyz.distance(touch.point.xyz).div(touch.point.w)).clamp(0,1).pow(2);
+   const facing=n.xyz.dot(touch.normal).clamp(0,1).pow(4);
+   const weight=falloff.mul(facing).mul(touch.pressure);
+   compression=compression.add(weight);
+   brush=brush.add(touch.direction.sub(n.xyz.mul(touch.direction.dot(n.xyz))).mul(weight));
+  }
+  compression=compression.clamp(0,.92);
+  const lift=float(1).sub(compression.mul(.83));
+  const center=a.xyz.add(n.xyz.mul(n.w).mul(t).mul(lift)).add(v.xyz.mul(n.w).mul(lean).mul(lift)).add(b.mul(n.w).mul(crossCurl).mul(lift)).add(brush.mul(n.w).mul(t.pow(2)).mul(1.55));
   const cross=n.xyz.cross(cameraPosition.sub(center));
   // A head-on view can make the cross product zero. Use the groom tangent at
   // that pole rather than normalize zero and produce invalid black fragments.
   const side=cross.dot(cross).greaterThan(.000001).select(cross,v.xyz).normalize();
   mat.positionNode=center.add(side.mul(a.w).mul(positionGeometry.x).mul(mix(1,.06,t)));
-  const shadeNormal=n.xyz.add(v.xyz.mul(phase.add(uv().y.mul(5)).sin()).mul(.18)).add(b.mul(.07));
+  const shadeNormal=n.xyz.add(v.xyz.mul(phase.add(uv().y.mul(5)).sin()).mul(.18)).add(b.mul(.07)).sub(brush.mul(.45));
   mat.normalNode=transformNormalToView(shadeNormal.normalize()).normalize();
   // MSAA can extrapolate UVs slightly outside a hairline triangle; clamp before
   // fractional powers so edge samples cannot become NaN (black pepper pixels).
   mat.colorNode=materialColor.rgb.mul(mix(.72,1.02,uv().y.clamp(0,1).pow(.55))).mul(phase.mul(2.13).sin().mul(.03).add(.97));
   // Sample the shadow at a stable point along each strand; tiny differences
   // along its width should not turn one strand into a chain of dark dots.
-  mat.receivedShadowPositionNode=a.xyz.add(n.xyz.mul(n.w).mul(.55));
+  mat.receivedShadowPositionNode=a.xyz.add(n.xyz.mul(n.w).mul(.55).mul(lift));
   const mesh=new THREE.Mesh(geometry,mat);mesh.name=`Plush fibers | ${item.sourceName}`;mesh.userData.fiberCount=count;
   mesh.castShadow=false;mesh.receiveShadow=true;
   source.updateWorldMatrix(true,false);const bounds=new THREE.Box3().setFromObject(source).expandByScalar(.11);
@@ -153,6 +168,17 @@ export async function loadFineFur(root){
    const fraction=distance<3.2?1:distance<6?.65:distance<11?.35:.18;
    mesh.geometry.instanceCount=Math.ceil(mesh.userData.fiberCount*fraction);
   }
+ };
+ group.userData.touch={
+  press:(...args)=>contactState.press(...args),
+  release:()=>contactState.release(),
+  update(dt,time){
+   contactState.update(dt,time);
+   for(const [owner,slots] of Object.entries(contactState.owners))slots.forEach((s,i)=>{
+    const u=touchUniforms[owner][i];u.point.value.set(...s.point,s.radius);u.normal.value.fromArray(s.normal);u.direction.value.fromArray(s.direction);u.pressure.value=s.pressure;
+   });
+  },
+  get status(){return Object.fromEntries(Object.entries(contactState.owners).map(([owner,slots])=>[owner,slots.map(s=>({point:[...s.point],pressure:s.pressure,radius:s.radius}))]));}
  };
  return group;
 }

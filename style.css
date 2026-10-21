@@ -19,3 +19,11 @@ body[data-menu-state="hidden"] #touchFly{bottom:20px}
 @media(max-width:760px){.dock-footer{flex-wrap:wrap;gap:4px;margin-top:5px}.dock-footer #hint{width:100%;font-size:10px}.menu-size-controls button{padding:7px 12px}body[data-menu-state="compact"] .dock{max-width:calc(100vw - 22px)}#menuRestore{bottom:14px;right:14px}#touchFly{bottom:245px}}
 
 #doorHint{position:fixed;z-index:6;pointer-events:none;padding:8px 13px;border-radius:14px;background:#fff8e9e8;border:1px solid #fff9;box-shadow:0 4px 16px #7655331f;color:#765333;font-size:12px}
+.pet-controls{display:flex;justify-content:center;align-items:center;gap:6px;margin-top:6px;flex-wrap:wrap}
+#petReticle{position:fixed;z-index:3;width:10px;height:10px;border:1.5px solid #886d55;border-radius:50%;transform:translate(-50%,-50%);background:#fff9;pointer-events:none}
+#petReticle.can-pet{width:16px;height:16px;border-color:#769065;background:#dce9c780;box-shadow:0 0 0 4px #fff4}
+#petHint{position:fixed;top:112px;left:50%;transform:translateX(-50%);max-width:calc(100vw - 24px);padding:8px 14px;margin:0;border-radius:18px;background:#fff9efb5;border:1px solid #fff8;backdrop-filter:blur(8px);font-size:12px;text-align:center;pointer-events:none;z-index:3}
+#help{max-height:calc(100vh - 110px);overflow-y:auto}
+body[data-menu-state="compact"] .pet-controls{display:none}
+body[data-hand="on"][data-menu-state="full"] #touchFly{bottom:290px}
+@media(max-width:760px){#petHint{top:132px;font-size:11px}.pet-controls{gap:3px}body[data-hand="on"][data-menu-state="full"] #touchFly{bottom:300px}}

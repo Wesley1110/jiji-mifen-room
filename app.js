@@ -2,19 +2,20 @@ import * as THREE from 'three/webgpu';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {DRACOLoader} from 'three/addons/loaders/DRACOLoader.js';
-import {makeFiberNap,softenFabric,loadFineFur} from './fur.js?revision=plush-4';
+import {makeFiberNap,softenFabric,loadFineFur} from './fur.js?revision=plush-touch-1';
 import {upgradeFairytaleBed} from './bed.js?revision=storybook-bed-2';
 import {placeBedOccupants} from './bedding.js?revision=bedding-2';
 import {initMenu} from './menu.js?revision=room-details-1';
 import {createBedsideSlippers} from './house-slippers.js?revision=room-details-4';
-import {createFairytaleDoor,bindDoorInteraction} from './door.js?revision=room-details-4';
+import {createFairytaleDoor,bindDoorInteraction} from './door.js?revision=hand-touch-1';
 import {createNavigation} from './navigation.js?revision=room-details-4';
+import {createPetting} from './petting.js?revision=hand-touch-1';
 
 const $=id=>document.getElementById(id), viewport=$('room');
 const menu=initMenu();
 const camera=new THREE.PerspectiveCamera(innerWidth<innerHeight?82:54,innerWidth/innerHeight,.05,200);
 const scene=new THREE.Scene();scene.background=new THREE.Color('#efe2d1');
-let renderer,orbit,plush,door,mode='orbit',floating=!matchMedia('(prefers-reduced-motion: reduce)').matches;
+let renderer,orbit,plush,door,petting,mode='orbit',floating=!matchMedia('(prefers-reduced-motion: reduce)').matches;
 const navigation=createNavigation(()=>door?.group.userData.angle||0);
 let lastInteraction=0,transition=null,drag=null,lastTime=0,frames=0,fpsTime=0,ready=false;
 let wheelTravel=0;
@@ -40,6 +41,7 @@ function goTo(name,instant=false){
  interact();
 }
 function setMode(next){
+ if(next==='orbit')petting?.setEnabled(false);
  clearFloat();keys.clear();drag=null;wheelTravel=0;mode=next;
  if(document.pointerLockElement)document.exitPointerLock();
  if(orbit){orbit.enabled=next==='orbit';if(next==='orbit'){const dir=new THREE.Vector3();camera.getWorldDirection(dir);orbit.target.copy(camera.position).addScaledVector(dir,4);}}
@@ -50,7 +52,7 @@ function setMode(next){
  interact();
 }
 function updateHint(){
- $('hint').textContent=mode==='fly'?'WASD 移動 · Shift 加速 · 滾輪拉近／拉遠 · Q／E 升降 · 拖曳轉向':'拖曳環繞 · 滾輪拉近／拉遠 · WASD 直接移動 · Shift 加速';
+ $('hint').textContent=mode==='fly'?'WASD 移動 · Shift 加速 · 滾輪前後 · Q／E 升降 · F 伸出／收起手':'拖曳環繞 · 滾輪拉近／拉遠 · WASD 直接移動 · Shift 加速 · F 伸出手';
 }
 function focusScene(){renderer?.domElement.focus({preventScroll:true});}
 function lookDelta(dx,dy){const e=new THREE.Euler().setFromQuaternion(camera.quaternion,'YXZ');e.y-=dx*.003;e.x=THREE.MathUtils.clamp(e.x-dy*.003,-1.48,1.48);e.z=0;camera.quaternion.setFromEuler(e);}
@@ -95,9 +97,10 @@ async function init(){
  const slippers=createBedsideSlippers(cloth);scene.add(slippers);meshCount+=slippers.userData.meshCount;
  door=createFairytaleDoor(gltf.scene,{canClose:()=>navigation.canClose(camera.position)});scene.add(door.group);meshCount+=door.group.userData.meshCount-door.group.userData.replacedMeshes;
  bindDoorInteraction({door,scene,camera,canvas:renderer.domElement,onInteract:interact});
+ petting=createPetting({scene,root:gltf.scene,plush,camera,canvas:renderer.domElement,getMode:()=>mode,setMode,onInteract:interact});
  setPressed('float',floating);await renderer.compileAsync(scene,camera);
  ready=true;fpsTime=performance.now();renderer.setAnimationLoop(animate);$('loading').hidden=true;
- window.__room={camera,orbit,renderer,scene,goTo,setMode,keys,door,navigation,get status(){return {ready,revision:'room-details-4',furRevision:'plush-4',bed:bed.userData,slippers:slippers.userData,door:door.group.userData,navigation:{area:navigation.region(camera.position),hallwayAccess:true},menu:menu.state,backend:actualGPU?'WebGPU':'WebGL2',mode,meshCount,fiberCount,floating,position:camera.position.toArray(),wheelTravel,renderInfo:renderer.info.render};}};
+ window.__room={camera,orbit,renderer,scene,goTo,setMode,keys,door,navigation,petting,get status(){return {ready,revision:'hand-touch-1',furRevision:'plush-touch-1',petting:petting.status,bed:bed.userData,slippers:slippers.userData,door:door.group.userData,navigation:{area:navigation.region(camera.position),hallwayAccess:true},menu:menu.state,backend:actualGPU?'WebGPU':'WebGL2',mode,meshCount,fiberCount,floating,position:camera.position.toArray(),wheelTravel,renderInfo:renderer.info.render};}};
  window.dispatchEvent(new Event('room-ready'));
 }
 function animate(time){
@@ -118,7 +121,7 @@ function animate(time){
  const interiorView=mode==='fly'||navigation.inHallway(camera.position);
  for(const w of walls){w.mesh.visible=interiorView||!(w.name.startsWith('Wall 01')&&camera.position.z< -3.2 || w.name.startsWith('Wall 02')&&camera.position.x< -10.65 || w.name.startsWith('Wall 03')&&camera.position.z>10.15 || w.name.startsWith('Wall 04')&&camera.position.x>5.45);}
  if(door){door.group.visible=interiorView||camera.position.z<=10.15;door.update(time,camera.position);}
- plush?.userData.updateLOD(camera);renderer.render(scene,camera);frames++;if(time-fpsTime>1000){$('fps').textContent=`${Math.round(frames*1000/(time-fpsTime))} fps`;frames=0;fpsTime=time;}
+ petting?.update(time,dt);plush?.userData.updateLOD(camera);renderer.render(scene,camera);frames++;if(time-fpsTime>1000){$('fps').textContent=`${Math.round(frames*1000/(time-fpsTime))} fps`;frames=0;fpsTime=time;}
 }
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{goTo(b.dataset.view);focusScene();});
 $('orbit').onclick=()=>{setMode('orbit');focusScene();};$('fly').onclick=()=>{setMode('fly');focusScene();};$('reset').onclick=()=>{goTo('home');focusScene();};

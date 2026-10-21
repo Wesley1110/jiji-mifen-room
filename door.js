@@ -97,7 +97,7 @@ export function bindDoorInteraction({door,scene,camera,canvas,onInteract}){
   pointer.set(document.pointerLockElement===canvas?0:(event.clientX-rect.left)/rect.width*2-1,document.pointerLockElement===canvas?0:-(event.clientY-rect.top)/rect.height*2+1);
   scene.updateMatrixWorld(true);ray.setFromCamera(pointer,camera);
   const target=ray.intersectObjects(door.pickTargets,false)[0];if(!target)return false;
-  const blockers=[];scene.traverse(o=>{if(o.isMesh&&isVisible(o)&&!o.userData.doorPick&&!o.userData.fiberCount)blockers.push(o);});
+  const blockers=[];scene.traverse(o=>{if(o.isMesh&&isVisible(o)&&!o.userData.doorPick&&!o.userData.fiberCount&&!o.userData.isHand)blockers.push(o);});
   const obstruction=ray.intersectObjects(blockers,false)[0];
   // The forgiving hit sphere extends around the visible knob; accept the
   // escutcheon and leaf immediately behind it, but never a wall in front.
