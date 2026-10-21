@@ -9,7 +9,7 @@ import {initMenu} from './menu.js?revision=room-details-1';
 import {createBedsideSlippers} from './house-slippers.js?revision=room-details-4';
 import {createFairytaleDoor,bindDoorInteraction} from './door.js?revision=hand-touch-1';
 import {createNavigation} from './navigation.js?revision=room-details-4';
-import {createPetting} from './petting.js?revision=hand-touch-1';
+import {createPetting} from './petting.js?revision=bear-paw-2';
 
 const $=id=>document.getElementById(id), viewport=$('room');
 const menu=initMenu();
@@ -52,7 +52,7 @@ function setMode(next){
  interact();
 }
 function updateHint(){
- $('hint').textContent=mode==='fly'?'WASD 移動 · Shift 加速 · 滾輪前後 · Q／E 升降 · F 伸出／收起手':'拖曳環繞 · 滾輪拉近／拉遠 · WASD 直接移動 · Shift 加速 · F 伸出手';
+ $('hint').textContent=mode==='fly'?'WASD 移動 · Shift 加速 · 滾輪前後 · Q／E 升降 · F 伸出／收起熊掌':'拖曳環繞 · 滾輪拉近／拉遠 · WASD 直接移動 · Shift 加速 · F 伸出熊掌';
 }
 function focusScene(){renderer?.domElement.focus({preventScroll:true});}
 function lookDelta(dx,dy){const e=new THREE.Euler().setFromQuaternion(camera.quaternion,'YXZ');e.y-=dx*.003;e.x=THREE.MathUtils.clamp(e.x-dy*.003,-1.48,1.48);e.z=0;camera.quaternion.setFromEuler(e);}
@@ -100,7 +100,7 @@ async function init(){
  petting=createPetting({scene,root:gltf.scene,plush,camera,canvas:renderer.domElement,getMode:()=>mode,setMode,onInteract:interact});
  setPressed('float',floating);await renderer.compileAsync(scene,camera);
  ready=true;fpsTime=performance.now();renderer.setAnimationLoop(animate);$('loading').hidden=true;
- window.__room={camera,orbit,renderer,scene,goTo,setMode,keys,door,navigation,petting,get status(){return {ready,revision:'hand-touch-1',furRevision:'plush-touch-1',petting:petting.status,bed:bed.userData,slippers:slippers.userData,door:door.group.userData,navigation:{area:navigation.region(camera.position),hallwayAccess:true},menu:menu.state,backend:actualGPU?'WebGPU':'WebGL2',mode,meshCount,fiberCount,floating,position:camera.position.toArray(),wheelTravel,renderInfo:renderer.info.render};}};
+ window.__room={camera,orbit,renderer,scene,goTo,setMode,keys,door,navigation,petting,get status(){return {ready,revision:'bear-paw-2',furRevision:'plush-touch-1',petting:petting.status,bed:bed.userData,slippers:slippers.userData,door:door.group.userData,navigation:{area:navigation.region(camera.position),hallwayAccess:true},menu:menu.state,backend:actualGPU?'WebGPU':'WebGL2',mode,meshCount,fiberCount,floating,position:camera.position.toArray(),wheelTravel,renderInfo:renderer.info.render};}};
  window.dispatchEvent(new Event('room-ready'));
 }
 function animate(time){

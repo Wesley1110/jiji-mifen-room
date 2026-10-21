@@ -27,3 +27,5 @@ body[data-menu-state="hidden"] #touchFly{bottom:20px}
 body[data-menu-state="compact"] .pet-controls{display:none}
 body[data-hand="on"][data-menu-state="full"] #touchFly{bottom:290px}
 @media(max-width:760px){#petHint{top:132px;font-size:11px}.pet-controls{gap:3px}body[data-hand="on"][data-menu-state="full"] #touchFly{bottom:300px}}
+
+.pet-action-label{font-size:12px;padding:7px 10px;color:#795940;background:#e6d0b94f;border-radius:12px}
