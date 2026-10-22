@@ -1,8 +1,8 @@
 import * as THREE from 'three/webgpu';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
-import {addGirlHead} from './toy-girl-head.js?revision=nightstand-preview-5';
-import {addGirlLimbs,makeChickFootGeometry} from './toy-limbs.js?revision=nightstand-preview-5';
+import {addGirlHead} from './toy-girl-head.js?revision=nightstand-v5';
+import {addGirlLimbs,makeChickFootGeometry} from './toy-limbs.js?revision=nightstand-v5';
 
 // The card is upright in XY, with independently modelled toys facing +Z.
 // The cabinet lays the complete assembly face-up in its moving drawer.
