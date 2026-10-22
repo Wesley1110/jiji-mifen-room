@@ -1,7 +1,8 @@
 import * as THREE from 'three/webgpu';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
-import {addGirlHead} from './toy-girl-head.js?revision=nightstand-preview-4';
+import {addGirlHead} from './toy-girl-head.js?revision=nightstand-preview-5';
+import {addGirlLimbs,makeChickFootGeometry} from './toy-limbs.js?revision=nightstand-preview-5';
 
 // The card is upright in XY, with independently modelled toys facing +Z.
 // The cabinet lays the complete assembly face-up in its moving drawer.
@@ -14,11 +15,11 @@ export function createStarterToyPack(){
  const box=(parent,name,p,s,m,r=.008)=>{const o=mesh(parent,name,new RoundedBoxGeometry(...s,3,r),m);o.position.fromArray(p);return o;};
  const tube=(parent,name,ps,r,m,segments=36)=>mesh(parent,name,new THREE.TubeGeometry(new THREE.CatmullRomCurve3(ps.map(p=>new THREE.Vector3(...p))),segments,r,7,false),m);
  const mat=(name,color,roughness=.75,extra={})=>new THREE.MeshPhysicalMaterial({name:'Toy | '+name,color,roughness,specularIntensity:.25,...extra});
- const skin=mat('soft satin vinyl','#efb69b',.61),hair=mat('soft charcoal moulded hair','#121413',.43,{specularIntensity:.35,clearcoat:.035,clearcoatRoughness:.6});
+ const skin=mat('soft satin vinyl','#f3c0a6',.66),hair=mat('soft charcoal moulded hair','#171918',.55,{specularIntensity:.26});
  const eye=mat('warm dark brown eyes','#24170f',.32,{specularIntensity:.30}),white=mat('eye catchlight','#fff9ed',.48),lip=mat('warm smile','#ac6348',.88);
  const blue=mat('powder blue woven dress','#73aec4',.9,{sheen:.45,sheenColor:new THREE.Color('#b5d4e0'),sheenRoughness:.9});
  const blueHem=mat('sewn blue hem','#71a5bb',.94),cream=mat('ivory canvas purse and sandals','#efe3cb',.83,{sheen:.25});
- const blush=mat('rose felt nose and bow','#df9b9f',.92,{sheen:.4}),gold=mat('honey felt beak and feet','#ecae50',.94);
+ const blush=mat('rose felt nose and bow','#df9b9f',.92,{sheen:.4}),gold=mat('honey felt beak and feet','#e99b36',.94);
  const furPink=mat('Mifen fine blush plush','#eab6b0',.98,{sheen:.55,sheenColor:new THREE.Color('#ffded6'),sheenRoughness:.85});
  const furCream=mat('Jiji cream plush','#eddeb6',.98,{sheen:.55,sheenColor:new THREE.Color('#fff4d5'),sheenRoughness:.85});
  const paper=mat('warm textured card edges','#dccba8',.96);
@@ -60,35 +61,36 @@ export function createStarterToyPack(){
  // Close-up sculpt follows the supplied girl's round cheeks and flowing hair.
  const girl=group(pack,'Chin blue dress collectible',[-.178,-.028,.022]);girl.scale.setScalar(.92);
  const sculpt=addGirlHead(girl,{skin,hair,eye,white,lip});
+ const limbs=addGirlLimbs(girl,{skin,cream});
  oval(girl,'short neck',[0,.052,.083],[.028,.047,.028],skin);
  oval(girl,'rounded upper chest',[0,.020,.081],[.077,.043,.040],skin);
- box(girl,'soft bodice',[0,-.027,.080],[.144,.12,.095],blue,.027);
+ // Rounded, fitted cloth rather than a rectangular torso. Its waist meets
+ // the upper skirt at the same depth, avoiding a disconnected horizontal gap.
+ {
+  const ps=[],uv=[],ix=[],n=96,rows=24;
+  for(let j=0;j<=rows;j++)for(let i=0;i<=n;i++){
+   const t=j/rows,a=i/n*Math.PI*2,rx=.074+.004*Math.sin(t*Math.PI),rz=.046+.003*Math.sin(t*Math.PI),y=THREE.MathUtils.lerp(-.002,-.102,t)-.002*Math.max(0,Math.sin(a))*(1-t);
+   ps.push(Math.cos(a)*rx,y,.081+Math.sin(a)*rz);uv.push(i/n,t);if(j<rows&&i<n){const k=j*(n+1)+i;ix.push(k,k+1,k+n+1,k+1,k+n+2,k+n+1);}
+  }
+  for(const [row,y] of [[0,-.002],[rows,-.102]]){const k=ps.length/3;ps.push(0,y,.081);uv.push(.5,.5);for(let i=0;i<n;i++){const a=row*(n+1)+i;row===0?ix.push(k,a+1,a):ix.push(k,a,a+1);}}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(ps,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(ix);g.computeVertexNormals();mesh(girl,'rounded fitted cloth bodice',g,blue);
+ }
  for(const side of [-1,1]){
-  oval(girl,'round shoulder',[side*.074,.016,.079],[.032,.040,.033],skin);
-  tube(girl,'blue shoulder strap',[[side*.061,-.020,.131],[side*.063,.047,.100],[side*.067,.043,.058],[side*.069,-.012,.043]],.006,blueHem,28);
-  // Tapered curved arms avoid the long rigid sticks of the earlier hand design.
-  const c=new THREE.CatmullRomCurve3([[side*.083,.016,.079],[side*.116,-.067,.096],[side*.145,-.155,.122],[side*.163,-.216,.14]].map(p=>new THREE.Vector3(...p)));
-  const g=new THREE.TubeGeometry(c,36,1,12,false),v=g.attributes.position;
-  for(let j=0;j<=36;j++){const t=j/36,center=c.getPointAt(t),r=.023*(1-t)+.014*t;for(let k=0;k<=12;k++){const i=j*13+k;v.setXYZ(i,center.x+(v.getX(i)-center.x)*r,center.y+(v.getY(i)-center.y)*r,center.z+(v.getZ(i)-center.z)*r);}}g.computeVertexNormals();mesh(girl,'gently curved vinyl arm',g,skin);
-  const hand=oval(girl,'soft mitten hand',[side*.167,-.234,.141],[.018,.030,.013],skin);hand.rotation.z=-side*.2;
-  oval(girl,'small rounded thumb',[side*.146,-.230,.153],[.009,.018,.008],skin).rotation.z=-side*.36;
+  tube(girl,'blue shoulder strap',[[side*.061,-.018,.131],[side*.063,.043,.100],[side*.067,.030,.062],[side*.069,-.030,.043]],.006,blueHem,28);
  }
  function dressTier(name,top,bottom,rt,rb,phase){
-  const p=[],uv=[],ix=[],hem=[];const n=112,levels=14;
-  for(let j=0;j<=levels;j++)for(let i=0;i<=n;i++){
-   const t=j/levels,a=i/n*Math.PI*2,r=THREE.MathUtils.lerp(rt,rb,t),fold=1+(.065*Math.cos(a*15+phase)+.018*Math.sin(a*7-phase))*(1-t*.25),x=Math.cos(a)*r*fold,z=.081+Math.sin(a)*r*.43*fold,y=THREE.MathUtils.lerp(top,bottom,t)+.0023*Math.cos(a*15+phase)*t**5;
-   p.push(x,y,z);uv.push(i/n*3,t);if(j===levels)hem.push([x,y,z]);if(j<levels&&i<n){const k=j*(n+1)+i;ix.push(k,k+1,k+n+1,k+1,k+n+2,k+n+1);}
-  }const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(ix);g.computeVertexNormals();const m=blue.clone();m.side=THREE.DoubleSide;mesh(girl,name,g,m);tube(girl,name+' turned sewn hem',hem,.0012,blueHem,144);
+  const p=[],uv=[],ix=[];const n=112,levels=24,stride=(levels+1)*(n+1);
+  for(let layer=0;layer<2;layer++)for(let j=0;j<=levels;j++)for(let i=0;i<=n;i++){
+   const t=j/levels,a=i/n*Math.PI*2,r=THREE.MathUtils.lerp(rt,rb,t)-layer*.0022,gather=phase===.4?THREE.MathUtils.smoothstep(t,0,.14):1,fold=1+(.045*Math.cos(a*15+phase)+.015*Math.sin(a*7-phase))*(1-t*.25)*gather,x=Math.cos(a)*r*fold,depthRatio=.43+(phase===.4?(.046/.074-.43)*(1-t)**2:0),z=.081+Math.sin(a)*r*depthRatio*fold,y=THREE.MathUtils.lerp(top,bottom,t)+.0008*Math.cos(a*15+phase)*t**5;
+   p.push(x,y,z);uv.push(i/n*3,t);if(j<levels&&i<n){const k=layer*stride+j*(n+1)+i;if(layer===0)ix.push(k,k+1,k+n+1,k+1,k+n+2,k+n+1);else ix.push(k,k+n+1,k+1,k+1,k+n+1,k+n+2);}
+  }
+  for(const row of [0,levels])for(let i=0;i<n;i++){const k=row*(n+1)+i;if(row===levels)ix.push(k,k+1,k+stride,k+1,k+stride+1,k+stride);else ix.push(k,k+stride,k+1,k+1,k+stride,k+stride+1);}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(ix);g.computeVertexNormals();mesh(girl,name,g,blue);
  }
- dressTier('gathered upper skirt',-.077,-.218,.072,.126,.4);dressTier('middle skirt flounce',-.209,-.345,.119,.159,1.2);dressTier('full lower skirt flounce',-.335,-.474,.152,.194,2.1);
- tube(girl,'thin dress waistband',[[-.073,-.077,.09],[-.057,-.076,.120],[0,-.076,.128],[.057,-.076,.120],[.073,-.077,.09]],.0025,blueHem);
- for(const side of [-1,1]){
-  oval(girl,'small lower leg',[side*.064,-.490,.083],[.027,.044,.027],skin);
-  oval(girl,'ivory sandal sole',[side*.064,-.550,.11],[.039,.015,.062],cream);
-  oval(girl,'foot in sandal',[side*.064,-.532,.116],[.030,.022,.046],skin);
-  for(let j=0;j<4;j++)oval(girl,'tiny rounded toes',[side*.064+(j-1.5)*.012,-.533,.151],[.007,.011,.010],skin);
-  for(const z of [.097,.130])tube(girl,'soft sandal strap',[[side*.064-.029,-.538,z],[side*.064-.020,-.512,z],[side*.064,-.509,z],[side*.064+.020,-.513,z],[side*.064+.030,-.538,z]],.0065,cream,24);
- }
+ // The upper ring meets the bodice; lower tiers start inside the preceding
+ // hem so their differently phased folds cannot pierce through one another.
+ dressTier('gathered upper skirt',-.102,-.218,.074,.130,.4);dressTier('middle skirt flounce',-.212,-.309,.114,.164,1.2);dressTier('full lower skirt flounce',-.303,-.441,.149,.198,2.1);
+ tube(girl,'thin dress waistband',[[-.074,-.099,.09],[-.057,-.098,.120],[0,-.098,.128],[.057,-.098,.120],[.074,-.099,.09]],.0015,blueHem);
  // Cream crossbody canvas bag: a broad ribbon strap, gusset and rounded flap.
  const strapCurve=new THREE.CatmullRomCurve3([[-.070,.052,.124],[-.055,-.023,.147],[0,-.122,.160],[.070,-.201,.177]].map(p=>new THREE.Vector3(...p)));
  const sp=[],su=[],si=[];for(let i=0;i<=50;i++){const v=strapCurve.getPoint(i/50),t=strapCurve.getTangent(i/50),q=new THREE.Vector3(-t.y,t.x,0).normalize().multiplyScalar(.008);sp.push(v.x-q.x,v.y-q.y,v.z,v.x+q.x,v.y+q.y,v.z);su.push(0,i/50,1,i/50);if(i<50){const k=i*2;si.push(k,k+1,k+2,k+1,k+3,k+2);}}
@@ -123,7 +125,9 @@ export function createStarterToyPack(){
  fuzzy(chick,'Jiji round head',[0,.055,.056],[.090,.085,.060],furCream,950);
  for(const s of [-1,1]){
   fuzzy(chick,'Jiji little wing',[s*.069,-.032,.055],[.022,.042,.026],furCream,155).rotation.z=s*.3;
-  fuzzy(chick,'Jiji golden foot',[s*.040,-.078,.085],[.028,.025,.030],gold,120);
+  const foot=mesh(chick,'Jiji padded three-lobed webbed foot',makeChickFootGeometry(),gold);
+  foot.position.set(s*.044,-.078,.090);foot.rotation.z=-s*.12;
+  fluff.push({o:foot,count:360,m:gold,surface:true});
  }
  plushEyes(chick,0,.057,.112,.038,.0075);
  oval(chick,'Jiji upper orange beak',[0,.035,.120],[.021,.012,.014],gold);oval(chick,'Jiji lower beak',[0,.028,.117],[.016,.008,.010],gold);
@@ -137,7 +141,7 @@ export function createStarterToyPack(){
   if(!o.isMesh||o.material===eye||o.material===white||o.material===lip)return;
   const g=o.geometry,normal=g.attributes.normal,existing=g.attributes.color,colors=[],nm=new THREE.Matrix3().getNormalMatrix(o.matrixWorld),n=new THREE.Vector3();
   for(let i=0;i<normal.count;i++){
-   n.fromBufferAttribute(normal,i).applyMatrix3(nm).normalize();const shade=.65+.35*Math.max(0,n.dot(softKey));
+   n.fromBufferAttribute(normal,i).applyMatrix3(nm).normalize();const shade=model===girl?.82+.18*Math.max(0,n.dot(softKey)):.65+.35*Math.max(0,n.dot(softKey));
    colors.push((existing?.getX(i)??1)*shade,(existing?.getY(i)??1)*shade,(existing?.getZ(i)??1)*shade);
   }
   g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
@@ -156,16 +160,22 @@ export function createStarterToyPack(){
  // Bake all wisps per plush material into three inexpensive meshes.
  pack.updateMatrixWorld(true);
  const fibreBuckets=new Map();
- for(const {o,count,m} of fluff){
+ function sampleGeometry(g){
+  const p=g.attributes.position,n=g.attributes.normal,idx=g.index,cdf=[],a=new THREE.Vector3(),b=new THREE.Vector3(),c=new THREE.Vector3();let total=0;
+  for(let i=0;i<idx.count;i+=3){a.fromBufferAttribute(p,idx.getX(i));b.fromBufferAttribute(p,idx.getX(i+1));c.fromBufferAttribute(p,idx.getX(i+2));total+=b.sub(a).cross(c.sub(a)).length()*.5;cdf.push(total);}
+  return()=>{let lo=0,hi=cdf.length-1,q=random()*total;while(lo<hi){const mid=(lo+hi)>>1;if(cdf[mid]<q)lo=mid+1;else hi=mid;}const u=Math.sqrt(random()),v=random(),weights=[1-u,u*(1-v),u*v],pos=new THREE.Vector3(),normal=new THREE.Vector3();for(let j=0;j<3;j++){const k=idx.getX(lo*3+j);pos.addScaledVector(a.fromBufferAttribute(p,k),weights[j]);normal.addScaledVector(b.fromBufferAttribute(n,k),weights[j]);}return {pos,normal:normal.normalize()};};
+ }
+ for(const {o,count,m,surface:customSurface} of fluff){
   if(!fibreBuckets.has(m))fibreBuckets.set(m,[]);const bucket=fibreBuckets.get(m),normalMatrix=new THREE.Matrix3().getNormalMatrix(o.matrixWorld);
+  const sample=customSurface?sampleGeometry(o.geometry):null;
   for(let i=0;i<count;i++){
    const y=random()*2-1,a=random()*Math.PI*2,r=Math.sqrt(1-y*y),unit=new THREE.Vector3(r*Math.cos(a),y,r*Math.sin(a));
-   const center=unit.clone().applyMatrix4(o.matrixWorld),normal=unit.clone().applyMatrix3(normalMatrix).normalize();
+   const hit=sample?.(),center=(hit?.pos||unit.clone()).applyMatrix4(o.matrixWorld),normal=(hit?.normal||unit.clone()).applyMatrix3(normalMatrix).normalize();
    const tangent=new THREE.Vector3().crossVectors(normal,Math.abs(normal.y)<.9?new THREE.Vector3(0,1,0):new THREE.Vector3(1,0,0)).normalize(),side=new THREE.Vector3().crossVectors(normal,tangent);
-   const len=.0016+random()*.0018,width=.00038+random()*.00022,bend=(random()-.5)*.0013;
+   const len=(.0016+random()*.0018)*(m===gold?.55:1),width=.00038+random()*.00022,bend=(random()-.5)*.0013;
    const base=center.clone().addScaledVector(normal,-.00035),mid=center.clone().addScaledVector(normal,len*.62).addScaledVector(tangent,bend),tip=center.clone().addScaledVector(normal,len).addScaledVector(tangent,bend*1.5);
    const p=[base.clone().addScaledVector(side,-width),base.clone().addScaledVector(side,width),mid.clone().addScaledVector(side,-width*.65),mid.clone().addScaledVector(side,width*.65),tip];
-   const shadeNormal=new THREE.Vector3(normal.x,normal.y,Math.abs(normal.z)).normalize();
+   const shadeNormal=new THREE.Vector3(normal.x*.65,normal.y*.65,.45+Math.abs(normal.z)).normalize();
    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p.flatMap(v=>v.toArray()),3));g.setAttribute('uv',new THREE.Float32BufferAttribute([0,0,1,0,0,.6,1,.6,.5,1],2));g.setIndex([0,1,2,1,3,2,2,3,4,2,1,0,2,3,1,4,3,2]);g.setAttribute('normal',new THREE.Float32BufferAttribute(Array.from({length:5},()=>shadeNormal.toArray()).flat(),3));bucket.push(g);
   }
  }
@@ -204,6 +214,6 @@ export function createStarterToyPack(){
  blister('Mifen clear compartment',.309,.119,.303,.310,.161);
  blister('laptop clear compartment',.309,-.186,.303,.245,.160);
  blister('Jiji clear compartment',.309,-.457,.303,.273,.167);
- pack.userData={revision:'starter-pack-2',reference:'米粉雞雞玩具模型.png',girl:sculpt.userData,mifenArms:'outward-down from shoulders, separate from hanging ears',contents:['Chin in a tiered blue dress with ivory crossbody purse','Mifen pink bow rabbit','miniature silver laptop','Jiji cream chick'],construction:'separate 3D toys, short plush fibres, printed die-cut card and four clear PET compartments',size:[1,1.28,.25],fibres:fluff.reduce((n,f)=>n+f.count,0)};
+ pack.userData={revision:'starter-pack-3',reference:'米粉雞雞玩具模型.png',girl:{...sculpt.userData,limbs},jijiFeet:'rounded three-lobed plush webbed feet',mifenArms:'outward-down from shoulders, separate from hanging ears',contents:['Chin in a tiered blue dress with ivory crossbody purse','Mifen pink bow rabbit','miniature silver laptop','Jiji cream chick'],construction:'separate 3D toys, short plush fibres, printed die-cut card and four clear PET compartments',size:[1,1.28,.25],fibres:fluff.reduce((n,f)=>n+f.count,0)};
  return pack;
 }
