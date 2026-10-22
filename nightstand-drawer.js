@@ -3,11 +3,9 @@ import * as THREE from 'three/webgpu';
 export function createDrawerController(moving,pickTargets,knob){
  const travel=.95,duration=820,state={open:false,moving:false,extension:0,travel,contents:'Chin starter toy pack'};
  let from=0,target=0,start=0;
- const button=document.getElementById('drawerToggle');
  function setOpen(open,time=performance.now()){
   if(state.open===open)return false;
   from=moving.position.z;target=open?travel:0;start=time;state.open=open;state.moving=true;
-  if(button){button.setAttribute('aria-expanded',String(open));button.textContent=open?'關閉抽屜':'開啟抽屜';}
   return true;
  }
  function update(time){const t=THREE.MathUtils.clamp((time-start)/duration,0,1),s=t*t*(3-2*t);moving.position.z=THREE.MathUtils.lerp(from,target,s);state.extension=moving.position.z;state.moving=t<1&&Math.abs(target-moving.position.z)>.00001;}

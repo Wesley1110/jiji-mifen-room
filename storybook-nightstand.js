@@ -3,8 +3,8 @@ import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {woodTexture,ginghamTexture,heartPath,drawFlower} from './storybook-desk.js?revision=nightstand-preview-1';
 import {createAssetPricingBook,createShadeFabric} from './bedside-materials.js?revision=nightstand-preview-2';
-import {createStarterToyPack} from './starter-toy-pack.js?revision=nightstand-preview-3';
-import {createDrawerController} from './nightstand-drawer.js?revision=nightstand-preview-3';
+import {createStarterToyPack} from './starter-toy-pack.js?revision=nightstand-preview-4';
+import {createDrawerController} from './nightstand-drawer.js?revision=nightstand-preview-4';
 
 export const NIGHTSTAND_PLACEMENT={position:[-3.925,0,-1.80],rotation:0};
 
@@ -224,6 +224,6 @@ export async function createStorybookNightstand(){
 
  root.position.fromArray(NIGHTSTAND_PLACEMENT.position);root.rotation.y=NIGHTSTAND_PLACEMENT.rotation;
  let meshCount=0,triangles=0;root.traverse(o=>{if(o.isMesh){meshCount++;triangles+=(o.geometry.index?.count||o.geometry.attributes.position.count)/3;}});
- root.userData={revision:'left-nightstand-preview-3',placement:NIGHTSTAND_PLACEMENT,meshCount,triangles,side:'left',rightOriginalPreserved:true,scope:'new left bedside cabinet only',drawer:root.drawerController.state,toyPack:toyPack.userData,bookShift:[-.025,0,.135],lamp:'woven cotton, sewn bindings and warm fixed glow',topBook:textbook.userData};
+ root.userData={revision:'left-nightstand-preview-4',placement:NIGHTSTAND_PLACEMENT,meshCount,triangles,side:'left',rightOriginalPreserved:true,scope:'new left bedside cabinet only',drawer:root.drawerController.state,toyPack:toyPack.userData,bookShift:[-.025,0,.135],lamp:'woven cotton, sewn bindings and warm fixed glow',topBook:textbook.userData};
  return root;
 }

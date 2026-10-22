@@ -7,12 +7,12 @@ import {upgradeFairytaleBed} from './bed.js?revision=storybook-bed-2';
 import {placeBedOccupants} from './bedding.js?revision=bedding-2';
 import {initMenu} from './menu.js?revision=room-details-1';
 import {createBedsideSlippers} from './house-slippers.js?revision=room-details-4';
-import {createFairytaleDoor,bindDoorInteraction} from './door.js?revision=nightstand-preview-3';
+import {createFairytaleDoor,bindDoorInteraction} from './door.js?revision=nightstand-preview-4';
 import {createNavigation} from './navigation.js?revision=room-details-4';
 import {createPetting} from './petting.js?revision=plump-paw-4';
 import {createStorybookDesk} from './storybook-desk.js?revision=nightstand-preview-1';
-import {createStorybookNightstand} from './storybook-nightstand.js?revision=nightstand-preview-3';
-import {bindDrawerInteraction} from './nightstand-drawer.js?revision=nightstand-preview-3';
+import {createStorybookNightstand} from './storybook-nightstand.js?revision=nightstand-preview-4';
+import {bindDrawerInteraction} from './nightstand-drawer.js?revision=nightstand-preview-4';
 
 const $=id=>document.getElementById(id), viewport=$('room');
 const menu=initMenu();
@@ -113,11 +113,10 @@ async function init(){
  drawer=nightstand.drawerController;
  const doorInteraction=bindDoorInteraction({door,scene,camera,canvas:renderer.domElement,onInteract:interact});
  const drawerInteraction=bindDrawerInteraction({drawer,scene,camera,canvas:renderer.domElement,onInteract:interact});
- $('drawerToggle').disabled=false;$('drawerToggle').onclick=()=>{drawer.toggle();interact();focusScene();};
  petting=createPetting({scene,root:gltf.scene,plush,camera,canvas:renderer.domElement,getMode:()=>mode,setMode,onInteract:interact,isSceneControl:e=>doorInteraction.hitTest(e)||drawerInteraction.hitTest(e)});
  setPressed('float',floating);await renderer.compileAsync(scene,camera);
  ready=true;fpsTime=performance.now();renderer.setAnimationLoop(animate);$('loading').hidden=true;
- window.__room={camera,orbit,renderer,scene,goTo,setMode,keys,door,drawer,navigation,petting,desk,nightstand,get status(){return {ready,revision:'nightstand-preview-3',furRevision:'plush-touch-1',petting:petting.status,bed:bed.userData,desk:desk.userData,nightstand:nightstand.userData,slippers:slippers.userData,door:door.group.userData,navigation:{area:navigation.region(camera.position),hallwayAccess:true},menu:menu.state,backend:actualGPU?'WebGPU':'WebGL2',mode,meshCount,fiberCount,floating,position:camera.position.toArray(),wheelTravel,renderInfo:renderer.info.render};}};
+ window.__room={camera,orbit,renderer,scene,goTo,setMode,keys,door,drawer,navigation,petting,desk,nightstand,get status(){return {ready,revision:'nightstand-preview-4',furRevision:'plush-touch-1',petting:petting.status,bed:bed.userData,desk:desk.userData,nightstand:nightstand.userData,slippers:slippers.userData,door:door.group.userData,navigation:{area:navigation.region(camera.position),hallwayAccess:true},menu:menu.state,backend:actualGPU?'WebGPU':'WebGL2',mode,meshCount,fiberCount,floating,position:camera.position.toArray(),wheelTravel,renderInfo:renderer.info.render};}};
  const requestedView=new URLSearchParams(location.search).get('view');if(Object.hasOwn(poses,requestedView))goTo(requestedView,true);
  window.dispatchEvent(new Event('room-ready'));
 }

@@ -1,6 +1,7 @@
 import * as THREE from 'three/webgpu';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+import {addGirlHead} from './toy-girl-head.js?revision=nightstand-preview-4';
 
 // The card is upright in XY, with independently modelled toys facing +Z.
 // The cabinet lays the complete assembly face-up in its moving drawer.
@@ -13,14 +14,14 @@ export function createStarterToyPack(){
  const box=(parent,name,p,s,m,r=.008)=>{const o=mesh(parent,name,new RoundedBoxGeometry(...s,3,r),m);o.position.fromArray(p);return o;};
  const tube=(parent,name,ps,r,m,segments=36)=>mesh(parent,name,new THREE.TubeGeometry(new THREE.CatmullRomCurve3(ps.map(p=>new THREE.Vector3(...p))),segments,r,7,false),m);
  const mat=(name,color,roughness=.75,extra={})=>new THREE.MeshPhysicalMaterial({name:'Toy | '+name,color,roughness,specularIntensity:.25,...extra});
- const skin=mat('soft matte vinyl','#edb896',.73),hair=mat('satin charcoal moulded hair','#201f1e',.49),hairLine=mat('subtle hair grooves','#302d29',.65);
- const eye=mat('dark glossy eyes','#2c211b',.22,{specularIntensity:.6}),white=mat('eye catchlight','#fff9ed',.36),lip=mat('warm smile','#ae694d',.85);
+ const skin=mat('soft satin vinyl','#efb69b',.61),hair=mat('soft charcoal moulded hair','#121413',.43,{specularIntensity:.35,clearcoat:.035,clearcoatRoughness:.6});
+ const eye=mat('warm dark brown eyes','#24170f',.32,{specularIntensity:.30}),white=mat('eye catchlight','#fff9ed',.48),lip=mat('warm smile','#ac6348',.88);
  const blue=mat('powder blue woven dress','#73aec4',.9,{sheen:.45,sheenColor:new THREE.Color('#b5d4e0'),sheenRoughness:.9});
- const blueHem=mat('sewn blue hem','#91bac9',.94),cream=mat('ivory canvas purse and sandals','#f1e9d4',.86,{sheen:.25});
+ const blueHem=mat('sewn blue hem','#71a5bb',.94),cream=mat('ivory canvas purse and sandals','#efe3cb',.83,{sheen:.25});
  const blush=mat('rose felt nose and bow','#df9b9f',.92,{sheen:.4}),gold=mat('honey felt beak and feet','#ecae50',.94);
  const furPink=mat('Mifen fine blush plush','#eab6b0',.98,{sheen:.55,sheenColor:new THREE.Color('#ffded6'),sheenRoughness:.85});
  const furCream=mat('Jiji cream plush','#eddeb6',.98,{sheen:.55,sheenColor:new THREE.Color('#fff4d5'),sheenRoughness:.85});
- const peach=mat('soft cheek tint','#dfa08d',.95),paper=mat('warm textured card edges','#dccba8',.96);
+ const paper=mat('warm textured card edges','#dccba8',.96);
 
  // Fine woven / felt normals stay shallow. Actual short fibres supply the outline.
  function textileNormal(){
@@ -28,7 +29,13 @@ export function createStarterToyPack(){
   for(let y=0;y<256;y++)for(let x=0;x<256;x++){const i=(y*256+x)*4,n=(random()-.5)*10;d.data[i]=128+Math.sin(x*Math.PI/2)*15+n;d.data[i+1]=128+Math.sin(y*Math.PI/2)*15+n;d.data[i+2]=252;d.data[i+3]=255;}ctx.putImageData(d,0,0);
   const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(4,4);t.anisotropy=8;return t;
  }
- const weave=textileNormal();for(const m of [blue,blueHem,cream,furPink,furCream,blush,gold]){m.normalMap=weave;m.normalScale.set(.16,.16);}
+ const weave=textileNormal();for(const m of [blue,blueHem,cream]){m.normalMap=weave;m.normalScale.set(.24,.24);}
+ function microFinish(){
+  const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d'),d=x.createImageData(256,256);
+  for(let i=0;i<d.data.length;i+=4){d.data[i]=128+(random()-.5)*18;d.data[i+1]=128+(random()-.5)*18;d.data[i+2]=254;d.data[i+3]=255;}x.putImageData(d,0,0);
+  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(3,3);t.anisotropy=8;return t;
+ }
+ const micro=microFinish();for(const m of [skin,hair,furPink,furCream,blush,gold]){m.normalMap=micro;m.normalScale.setScalar(m===skin?.07:m===hair?.08:.30);}
 
  function roundedShape(w,h,r){const s=new THREE.Shape(),x=-w/2,y=-h/2;s.moveTo(x+r,y);s.lineTo(x+w-r,y);s.quadraticCurveTo(x+w,y,x+w,y+r);s.lineTo(x+w,y+h-r);s.quadraticCurveTo(x+w,y+h,x+w-r,y+h);s.lineTo(x+r,y+h);s.quadraticCurveTo(x,y+h,x,y+h-r);s.lineTo(x,y+r);s.quadraticCurveTo(x,y,x+r,y);s.closePath();return s;}
  function extrude(parent,name,shape,z,depth,m,bevel=.002){const g=new THREE.ExtrudeGeometry(shape,{depth,bevelEnabled:bevel>0,bevelSize:bevel,bevelThickness:bevel,bevelSegments:3,curveSegments:28});const o=mesh(parent,name,g,m);o.position.z=z;return o;}
@@ -50,41 +57,17 @@ export function createStarterToyPack(){
  const cg=new THREE.ShapeGeometry(cardShape,32),cp=cg.attributes.position,uv=cg.attributes.uv;for(let i=0;i<cp.count;i++)uv.setXY(i,cp.getX(i)+.5,(cp.getY(i)+.64)/1.28);
  const face=mesh(pack,'printed starter pack card',cg,mat('uncoated printed paper','#ffffff',.98,{map:printed}));face.position.z=.007;
 
- // One-piece soft hair masses and deliberately shallow, friendly facial features.
+ // Close-up sculpt follows the supplied girl's round cheeks and flowing hair.
  const girl=group(pack,'Chin blue dress collectible',[-.178,-.028,.022]);girl.scale.setScalar(.92);
- oval(girl,'long rounded back hair',[0,.075,.039],[.148,.238,.028],hair);
- for(const side of [-1,1]){
-  const lock=oval(girl,'long side swept hair',[side*.109,.067,.042],[.047,.193,.026],hair);lock.rotation.z=-side*.14;
-  tube(girl,'quiet moulded hair strand',[[side*.115,.21,.065],[side*.139,.08,.067],[side*.138,-.052,.069],[side*.109,-.116,.062]],.0012,hairLine);
- }
- oval(girl,'rounded vinyl face',[0,.18,.099],[.117,.123,.085],skin);
- for(const side of [-1,1])oval(girl,'small rounded ear',[side*.116,.161,.093],[.022,.034,.022],skin);
+ const sculpt=addGirlHead(girl,{skin,hair,eye,white,lip});
  oval(girl,'short neck',[0,.052,.083],[.028,.047,.028],skin);
  oval(girl,'rounded upper chest',[0,.020,.081],[.077,.043,.040],skin);
- // Scalp crown is behind the forehead; two swept patches taper into the fringe.
- function hairPatch(name,points,width){
-  const c=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p))),p=[],ix=[],uv=[];
-  for(let j=0;j<=36;j++){const t=j/36,v=c.getPoint(t),d=c.getTangent(t),across=new THREE.Vector3(-d.y,d.x,0).normalize(),w=width*Math.sin(Math.PI*(t*.90+.05))**.6;
-   for(let k=0;k<=14;k++){const s=k/14*2-1,n=v.clone().addScaledVector(across,s*w);n.z+=.016*(1-s*s);p.push(n.x,n.y,n.z);uv.push(k/14,t);if(j<36&&k<14){const a=j*15+k;ix.push(a,a+15,a+1,a+1,a+15,a+16);}}
-  }const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(ix);g.computeVertexNormals();const m=hair.clone();m.side=THREE.DoubleSide;mesh(girl,name,g,m);
- }
- oval(girl,'rounded crown hair',[0,.259,.067],[.116,.071,.070],hair);
- hairPatch('broad soft swept fringe',[[.032,.292,.126],[-.036,.276,.159],[-.079,.226,.162],[-.106,.192,.136]],.047);
- hairPatch('tucked right fringe',[[.040,.288,.127],[.079,.262,.145],[.100,.211,.138],[.106,.182,.126]],.025);
- for(const side of [-1,1]){
-  oval(girl,'gentle oval eye',[side*.046,.181,.177],[.012,.016,.007],eye);
-  oval(girl,'tiny eye glint',[side*.046-.003,.187,.183],[.0032,.004,.0016],white);
-  tube(girl,'delicate eyebrow',[[side*.065,.214,.169],[side*.048,.219,.175],[side*.033,.215,.176]],.0018,hair);
-  oval(girl,'subtle rosy cheek',[side*.075,.145,.160],[.020,.011,.0018],peach);
- }
- oval(girl,'little button nose',[0,.155,.183],[.010,.010,.010],skin);
- tube(girl,'small happy curved smile',[[-.024,.128,.173],[0,.122,.178],[.024,.128,.173]],.0017,lip);
  box(girl,'soft bodice',[0,-.027,.080],[.144,.12,.095],blue,.027);
  for(const side of [-1,1]){
   oval(girl,'round shoulder',[side*.074,.016,.079],[.032,.040,.033],skin);
   tube(girl,'blue shoulder strap',[[side*.061,-.020,.131],[side*.063,.047,.100],[side*.067,.043,.058],[side*.069,-.012,.043]],.006,blueHem,28);
   // Tapered curved arms avoid the long rigid sticks of the earlier hand design.
-  const c=new THREE.CatmullRomCurve3([[side*.091,.009,.08],[side*.116,-.067,.096],[side*.145,-.155,.122],[side*.163,-.216,.14]].map(p=>new THREE.Vector3(...p)));
+  const c=new THREE.CatmullRomCurve3([[side*.083,.016,.079],[side*.116,-.067,.096],[side*.145,-.155,.122],[side*.163,-.216,.14]].map(p=>new THREE.Vector3(...p)));
   const g=new THREE.TubeGeometry(c,36,1,12,false),v=g.attributes.position;
   for(let j=0;j<=36;j++){const t=j/36,center=c.getPointAt(t),r=.023*(1-t)+.014*t;for(let k=0;k<=12;k++){const i=j*13+k;v.setXYZ(i,center.x+(v.getX(i)-center.x)*r,center.y+(v.getY(i)-center.y)*r,center.z+(v.getZ(i)-center.z)*r);}}g.computeVertexNormals();mesh(girl,'gently curved vinyl arm',g,skin);
   const hand=oval(girl,'soft mitten hand',[side*.167,-.234,.141],[.018,.030,.013],skin);hand.rotation.z=-side*.2;
@@ -93,9 +76,9 @@ export function createStarterToyPack(){
  function dressTier(name,top,bottom,rt,rb,phase){
   const p=[],uv=[],ix=[],hem=[];const n=112,levels=14;
   for(let j=0;j<=levels;j++)for(let i=0;i<=n;i++){
-   const t=j/levels,a=i/n*Math.PI*2,r=THREE.MathUtils.lerp(rt,rb,t),fold=1+.05*Math.cos(a*15+phase)*(1-t*.25),x=Math.cos(a)*r*fold,z=.081+Math.sin(a)*r*.43*fold,y=THREE.MathUtils.lerp(top,bottom,t)+.0023*Math.cos(a*15+phase)*t**5;
+   const t=j/levels,a=i/n*Math.PI*2,r=THREE.MathUtils.lerp(rt,rb,t),fold=1+(.065*Math.cos(a*15+phase)+.018*Math.sin(a*7-phase))*(1-t*.25),x=Math.cos(a)*r*fold,z=.081+Math.sin(a)*r*.43*fold,y=THREE.MathUtils.lerp(top,bottom,t)+.0023*Math.cos(a*15+phase)*t**5;
    p.push(x,y,z);uv.push(i/n*3,t);if(j===levels)hem.push([x,y,z]);if(j<levels&&i<n){const k=j*(n+1)+i;ix.push(k,k+1,k+n+1,k+1,k+n+2,k+n+1);}
-  }const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(ix);g.computeVertexNormals();const m=blue.clone();m.side=THREE.DoubleSide;mesh(girl,name,g,m);tube(girl,name+' turned sewn hem',hem,.0022,blueHem,144);
+  }const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(ix);g.computeVertexNormals();const m=blue.clone();m.side=THREE.DoubleSide;mesh(girl,name,g,m);tube(girl,name+' turned sewn hem',hem,.0012,blueHem,144);
  }
  dressTier('gathered upper skirt',-.077,-.218,.072,.126,.4);dressTier('middle skirt flounce',-.209,-.345,.119,.159,1.2);dressTier('full lower skirt flounce',-.335,-.474,.152,.194,2.1);
  tube(girl,'thin dress waistband',[[-.073,-.077,.09],[-.057,-.076,.120],[0,-.076,.128],[.057,-.076,.120],[.073,-.077,.09]],.0025,blueHem);
@@ -127,7 +110,7 @@ export function createStarterToyPack(){
  fuzzy(bunny,'Mifen round soft head',[0,.139,.057],[.085,.081,.055],furPink,720);
  for(const s of [-1,1]){
   fuzzy(bunny,'Mifen floppy ear',[s*.080,.116,.051],[.024,.080,.026],furPink,240).rotation.z=s*.32;
-  fuzzy(bunny,'Mifen little paw',[s*.063,.023,.058],[.020,.039,.020],furPink,95).rotation.z=-s*.22;
+  fuzzy(bunny,'Mifen relaxed outward arm',[s*.073,.031,.066],[.020,.036,.022],furPink,95).rotation.z=s*.42;
   fuzzy(bunny,'Mifen rounded foot',[s*.039,-.038,.073],[.027,.023,.028],furPink,120);
   oval(bunny,'pink velvet bow loop',[s*.026,.222,.064],[.030,.023,.017],blush).rotation.z=-s*.22;
  }
@@ -144,6 +127,32 @@ export function createStarterToyPack(){
  }
  plushEyes(chick,0,.057,.112,.038,.0075);
  oval(chick,'Jiji upper orange beak',[0,.035,.120],[.021,.012,.014],gold);oval(chick,'Jiji lower beak',[0,.028,.117],[.016,.008,.010],gold);
+
+ // Gentle sculpted colour variation preserves the small forms in the room's
+ // broad fill light. It is baked into vertex colours, so the GLB keeps the look
+ // without additional lights, render passes, or a custom WebGPU-only shader.
+ const tonalMaterials=new Map(),softKey=new THREE.Vector3(-.48,.58,.66).normalize();
+ pack.updateMatrixWorld(true);
+ for(const model of [girl,bunny,chick])model.traverse(o=>{
+  if(!o.isMesh||o.material===eye||o.material===white||o.material===lip)return;
+  const g=o.geometry,normal=g.attributes.normal,existing=g.attributes.color,colors=[],nm=new THREE.Matrix3().getNormalMatrix(o.matrixWorld),n=new THREE.Vector3();
+  for(let i=0;i<normal.count;i++){
+   n.fromBufferAttribute(normal,i).applyMatrix3(nm).normalize();const shade=.65+.35*Math.max(0,n.dot(softKey));
+   colors.push((existing?.getX(i)??1)*shade,(existing?.getY(i)??1)*shade,(existing?.getZ(i)??1)*shade);
+  }
+  g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+  if(!tonalMaterials.has(o.material)){const m=o.material.clone();m.vertexColors=true;tonalMaterials.set(o.material,m);}o.material=tonalMaterials.get(o.material);
+ });
+
+ // Soft grounding on the cardboard, behind the actual 3D figures. These broad
+ // low-opacity shadows do not replace the moving scene's real shadow maps.
+ const shadowCanvas=document.createElement('canvas');shadowCanvas.width=shadowCanvas.height=128;
+ const sx=shadowCanvas.getContext('2d'),gradient=sx.createRadialGradient(64,64,4,64,64,64);
+ gradient.addColorStop(0,'rgba(72,49,25,.30)');gradient.addColorStop(.55,'rgba(72,49,25,.18)');gradient.addColorStop(1,'rgba(72,49,25,0)');sx.fillStyle=gradient;sx.fillRect(0,0,128,128);
+ const shadowMat=new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(shadowCanvas),transparent:true,depthWrite:false,toneMapped:false});
+ for(const [x,y,w,h] of [[-.178,-.125,.41,.88],[.307,.115,.26,.30],[.307,-.466,.25,.25]]){
+  const shadow=mesh(pack,'soft contact shade behind toy',new THREE.PlaneGeometry(w,h),shadowMat);shadow.position.set(x+.008,y-.012,.0085);shadow.castShadow=false;shadow.receiveShadow=false;
+ }
  // Bake all wisps per plush material into three inexpensive meshes.
  pack.updateMatrixWorld(true);
  const fibreBuckets=new Map();
@@ -156,10 +165,11 @@ export function createStarterToyPack(){
    const len=.0016+random()*.0018,width=.00038+random()*.00022,bend=(random()-.5)*.0013;
    const base=center.clone().addScaledVector(normal,-.00035),mid=center.clone().addScaledVector(normal,len*.62).addScaledVector(tangent,bend),tip=center.clone().addScaledVector(normal,len).addScaledVector(tangent,bend*1.5);
    const p=[base.clone().addScaledVector(side,-width),base.clone().addScaledVector(side,width),mid.clone().addScaledVector(side,-width*.65),mid.clone().addScaledVector(side,width*.65),tip];
-   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p.flatMap(v=>v.toArray()),3));g.setAttribute('uv',new THREE.Float32BufferAttribute([0,0,1,0,0,.6,1,.6,.5,1],2));g.setIndex([0,1,2,1,3,2,2,3,4]);g.computeVertexNormals();bucket.push(g);
+   const shadeNormal=new THREE.Vector3(normal.x,normal.y,Math.abs(normal.z)).normalize();
+   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p.flatMap(v=>v.toArray()),3));g.setAttribute('uv',new THREE.Float32BufferAttribute([0,0,1,0,0,.6,1,.6,.5,1],2));g.setIndex([0,1,2,1,3,2,2,3,4,2,1,0,2,3,1,4,3,2]);g.setAttribute('normal',new THREE.Float32BufferAttribute(Array.from({length:5},()=>shadeNormal.toArray()).flat(),3));bucket.push(g);
   }
  }
- for(const [m,gs] of fibreBuckets){const fm=m.clone();fm.name=m.name+' fine short fibres';fm.side=THREE.DoubleSide;fm.normalMap=null;const f=mesh(pack,'fine short plush fibres',mergeGeometries(gs),fm);f.castShadow=false;f.receiveShadow=false;gs.forEach(g=>g.dispose());}
+ for(const [m,gs] of fibreBuckets){const fm=m.clone();fm.name=m.name+' softly shaded fine short fibres';fm.side=THREE.FrontSide;fm.normalMap=null;const f=mesh(pack,'fine short plush fibres',mergeGeometries(gs),fm);f.castShadow=false;f.receiveShadow=false;gs.forEach(g=>g.dispose());}
 
  // A miniature laptop is fully three-dimensional, including individual keys.
  const laptop=group(pack,'tiny silver laptop',[.307,-.186,.022]);
@@ -194,6 +204,6 @@ export function createStarterToyPack(){
  blister('Mifen clear compartment',.309,.119,.303,.310,.161);
  blister('laptop clear compartment',.309,-.186,.303,.245,.160);
  blister('Jiji clear compartment',.309,-.457,.303,.273,.167);
- pack.userData={revision:'starter-pack-1',reference:'米粉雞雞玩具模型.png',contents:['Chin in a tiered blue dress with ivory crossbody purse','Mifen pink bow rabbit','miniature silver laptop','Jiji cream chick'],construction:'separate 3D toys, short plush fibres, printed die-cut card and four clear PET compartments',size:[1,1.28,.25],fibres:fluff.reduce((n,f)=>n+f.count,0)};
+ pack.userData={revision:'starter-pack-2',reference:'米粉雞雞玩具模型.png',girl:sculpt.userData,mifenArms:'outward-down from shoulders, separate from hanging ears',contents:['Chin in a tiered blue dress with ivory crossbody purse','Mifen pink bow rabbit','miniature silver laptop','Jiji cream chick'],construction:'separate 3D toys, short plush fibres, printed die-cut card and four clear PET compartments',size:[1,1.28,.25],fibres:fluff.reduce((n,f)=>n+f.count,0)};
  return pack;
 }
