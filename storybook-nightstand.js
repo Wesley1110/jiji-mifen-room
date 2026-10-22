@@ -140,7 +140,7 @@ export async function createStorybookNightstand(){
  lathe(lamp,'turned hinoki lamp base',[[0,0],[.18,0],[.205,.022],[.207,.06],[.18,.105],[.09,.12],[0,.12]],[0,0,0],wood);
  lathe(lamp,'rounded wooden lamp stem',[[.046,.09],[.048,.14],[.041,.58],[.052,.62]],[0,0,0],upright);
  const lampCloth=createShadeFabric();
- const ribbonCloth=lampCloth.clone();ribbonCloth.name='Bedside | woven blush cotton binding';ribbonCloth.map=null;ribbonCloth.color.set('#e7b6ac');ribbonCloth.emissiveIntensity=0;ribbonCloth.normalScale.set(.30,.30);
+ const ribbonCloth=lampCloth.clone();ribbonCloth.name='Bedside | woven blush cotton binding';ribbonCloth.map=null;ribbonCloth.normalMap=null;ribbonCloth.color.set('#e7b6ac');ribbonCloth.emissiveIntensity=0;
  const ribbonFold=ribbonCloth.clone();ribbonFold.color.set('#d9a49c');
  const shadePos=[],shadeUV=[],shadeIndices=[],bottom=[],top=[],n=192,levels=32;
  const shadeRadius=(a,t)=>.348*(1-t)+.205*t+.015*Math.sin(t*Math.PI)+.0027*Math.cos(a*24+.10*Math.sin(t*Math.PI))*(.2+.8*Math.sin(t*Math.PI));
@@ -152,7 +152,7 @@ export async function createStorybookNightstand(){
   if(j<levels&&i<n){const k=j*(n+1)+i;shadeIndices.push(k,k+n+1,k+1,k+1,k+n+1,k+n+2);}
  }
  const shadeGeo=new THREE.BufferGeometry();shadeGeo.setAttribute('position',new THREE.Float32BufferAttribute(shadePos,3));shadeGeo.setAttribute('uv',new THREE.Float32BufferAttribute(shadeUV,2));shadeGeo.setIndex(shadeIndices);shadeGeo.computeVertexNormals();mesh(lamp,'open bell shaped gingham shade',shadeGeo,lampCloth);
- tube(lamp,'scalloped rose shade binding',bottom,.014,ribbonCloth);tube(lamp,'ruffled top shade rim',top,.011,ribbonCloth);
+ for(const binding of [tube(lamp,'scalloped rose shade binding',bottom,.014,ribbonCloth),tube(lamp,'ruffled top shade rim',top,.011,ribbonCloth)]){binding.castShadow=false;binding.receiveShadow=false;}
  const liningShade=lampCloth.clone();liningShade.name='Bedside | separate warm cotton shade lining';liningShade.map=null;liningShade.color.set('#fff0d7');liningShade.side=THREE.BackSide;liningShade.emissiveIntensity=.12;const inner=mesh(lamp,'warm ivory shade lining',shadeGeo,liningShade);inner.scale.set(.984,1,.984);
  // Running stitches follow both bindings, kept in one mesh for inexpensive rendering.
  const stitches=[];
@@ -162,7 +162,7 @@ export async function createStorybookNightstand(){
  }
  const sewn=mesh(lamp,'fine running stitches on fabric binding',mergeGeometries(stitches),thread);sewn.castShadow=false;stitches.forEach(g=>g.dispose());
  const bulbMat=new THREE.MeshStandardMaterial({color:'#fff4d4',emissive:'#ffe6ae',emissiveIntensity:.7,roughness:.8});oval(lamp,'warm lamp bulb',[0,.65,0],[.065,.085,.065],bulbMat);
- bow(lamp,[.055,.98,.235],.37,ribbonCloth,ribbonFold);
+ const lampBow=bow(lamp,[.055,.98,.235],.37,ribbonCloth,ribbonFold);lampBow.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});
  tube(lamp,'heart pull cord',[[.21,.58,.08],[.21,.40,.08],[.21,.32,.08]],.004,thread);
  panel(lamp,'little blush heart pull',heartPath(0,0,.09),[.21,.29,.068],.024,blush,.006);
  const glow=new THREE.PointLight('#ffdfb0',.42,1.9,2);glow.name='Floral bedside | gentle lamp glow';glow.position.set(0,.54,0);lamp.add(glow);
