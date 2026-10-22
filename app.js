@@ -10,7 +10,8 @@ import {createBedsideSlippers} from './house-slippers.js?revision=room-details-4
 import {createFairytaleDoor,bindDoorInteraction} from './door.js?revision=plump-paw-4';
 import {createNavigation} from './navigation.js?revision=room-details-4';
 import {createPetting} from './petting.js?revision=plump-paw-4';
-import {createStorybookDesk} from './storybook-desk.js?revision=storybook-desk-1';
+import {createStorybookDesk} from './storybook-desk.js?revision=nightstand-preview-1';
+import {createStorybookNightstand} from './storybook-nightstand.js?revision=nightstand-preview-1';
 
 const $=id=>document.getElementById(id), viewport=$('room');
 const menu=initMenu();
@@ -28,6 +29,7 @@ const walls=[];const poses={
  rug:{pos:[-7.3,5.6,3.9],target:[-6.5,.05,1.5]},
  slippers:{pos:[-5.65,2.35,3.9],target:[-3.7,.20,1.75]},
  desk:{pos:[-5.15,4.35,9.55],target:[-8.65,1.82,5.62]},
+ nightstand:{pos:[-6.55,3.65,1.15],target:[-3.925,1.55,-1.8]},
  door:{pos:[-2.5,2.35,5.7],target:[-3.55,1.65,10.2]},
  window:{pos:[.3,4.1,5.6],target:[5.5,3.4,.6]},
  plan:{pos:[-2.6,19.5,3.51],target:[-2.6,0,3.5]}
@@ -100,12 +102,13 @@ async function init(){
  const slippers=createBedsideSlippers(cloth);scene.add(slippers);meshCount+=slippers.userData.meshCount;
  door=createFairytaleDoor(gltf.scene,{canClose:()=>navigation.canClose(camera.position)});scene.add(door.group);meshCount+=door.group.userData.meshCount-door.group.userData.replacedMeshes;
  const desk=createStorybookDesk();scene.add(desk);meshCount+=desk.userData.meshCount;
+ const nightstand=createStorybookNightstand();scene.add(nightstand);meshCount+=nightstand.userData.meshCount;
  const doorInteraction=bindDoorInteraction({door,scene,camera,canvas:renderer.domElement,onInteract:interact});
  petting=createPetting({scene,root:gltf.scene,plush,camera,canvas:renderer.domElement,getMode:()=>mode,setMode,onInteract:interact,isSceneControl:doorInteraction.hitTest});
  setPressed('float',floating);await renderer.compileAsync(scene,camera);
  ready=true;fpsTime=performance.now();renderer.setAnimationLoop(animate);$('loading').hidden=true;
- window.__room={camera,orbit,renderer,scene,goTo,setMode,keys,door,navigation,petting,desk,get status(){return {ready,revision:'storybook-desk-1',furRevision:'plush-touch-1',petting:petting.status,bed:bed.userData,desk:desk.userData,slippers:slippers.userData,door:door.group.userData,navigation:{area:navigation.region(camera.position),hallwayAccess:true},menu:menu.state,backend:actualGPU?'WebGPU':'WebGL2',mode,meshCount,fiberCount,floating,position:camera.position.toArray(),wheelTravel,renderInfo:renderer.info.render};}};
- if(new URLSearchParams(location.search).get('view')==='desk')goTo('desk',true);
+ window.__room={camera,orbit,renderer,scene,goTo,setMode,keys,door,navigation,petting,desk,nightstand,get status(){return {ready,revision:'nightstand-preview-1',furRevision:'plush-touch-1',petting:petting.status,bed:bed.userData,desk:desk.userData,nightstand:nightstand.userData,slippers:slippers.userData,door:door.group.userData,navigation:{area:navigation.region(camera.position),hallwayAccess:true},menu:menu.state,backend:actualGPU?'WebGPU':'WebGL2',mode,meshCount,fiberCount,floating,position:camera.position.toArray(),wheelTravel,renderInfo:renderer.info.render};}};
+ const requestedView=new URLSearchParams(location.search).get('view');if(Object.hasOwn(poses,requestedView))goTo(requestedView,true);
  window.dispatchEvent(new Event('room-ready'));
 }
 function animate(time){

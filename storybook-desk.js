@@ -7,7 +7,7 @@ export const DESK_PLACEMENT = {position: [-9.20, 0, 5.6], rotation: Math.PI / 2}
 export const FURNITURE_PLAN = {
   desk: {center: [-9.20, 5.6], facing: '+X', built: true},
   dresser: {bounds: [-9.8, -6.3, 8.50, 9.75], built: false},
-  nightstand: {bounds: [-4.75, -3.10, -2.50, -1.10], side: 'left', built: false},
+  nightstand: {bounds: [-4.74, -3.09, -2.46, -1.03], side: 'left', built: true, preview: true},
   existingNightstand: {bounds: [2.91, 4.13, -1.64, -.66], side: 'right', preserve: true, built: true}
 };
 
@@ -62,6 +62,9 @@ function paperTexture() {
     c.fillStyle='#9cac85';c.beginPath();c.ellipse(785,283,27,12,.6,0,Math.PI*2);c.fill();
   });
 }
+
+// Shared palette and motifs keep the matching bedside cabinet in the same set.
+export {woodTexture, ginghamTexture, heartPath, drawFlower};
 
 export function createStorybookDesk() {
   const group=new THREE.Group();group.name='Heartwood writing desk and cushioned chair';
