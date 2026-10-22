@@ -10,7 +10,7 @@ import {createBedsideSlippers} from './house-slippers.js?revision=room-details-4
 import {createFairytaleDoor,bindDoorInteraction} from './door.js?revision=plump-paw-4';
 import {createNavigation} from './navigation.js?revision=room-details-4';
 import {createPetting} from './petting.js?revision=plump-paw-4';
-import {createStorybookDesk} from './storybook-desk.js?revision=desk-preview-1';
+import {createStorybookDesk} from './storybook-desk.js?revision=storybook-desk-1';
 
 const $=id=>document.getElementById(id), viewport=$('room');
 const menu=initMenu();
@@ -104,7 +104,7 @@ async function init(){
  petting=createPetting({scene,root:gltf.scene,plush,camera,canvas:renderer.domElement,getMode:()=>mode,setMode,onInteract:interact,isSceneControl:doorInteraction.hitTest});
  setPressed('float',floating);await renderer.compileAsync(scene,camera);
  ready=true;fpsTime=performance.now();renderer.setAnimationLoop(animate);$('loading').hidden=true;
- window.__room={camera,orbit,renderer,scene,goTo,setMode,keys,door,navigation,petting,desk,get status(){return {ready,revision:'desk-preview-1',furRevision:'plush-touch-1',petting:petting.status,bed:bed.userData,desk:desk.userData,slippers:slippers.userData,door:door.group.userData,navigation:{area:navigation.region(camera.position),hallwayAccess:true},menu:menu.state,backend:actualGPU?'WebGPU':'WebGL2',mode,meshCount,fiberCount,floating,position:camera.position.toArray(),wheelTravel,renderInfo:renderer.info.render};}};
+ window.__room={camera,orbit,renderer,scene,goTo,setMode,keys,door,navigation,petting,desk,get status(){return {ready,revision:'storybook-desk-1',furRevision:'plush-touch-1',petting:petting.status,bed:bed.userData,desk:desk.userData,slippers:slippers.userData,door:door.group.userData,navigation:{area:navigation.region(camera.position),hallwayAccess:true},menu:menu.state,backend:actualGPU?'WebGPU':'WebGL2',mode,meshCount,fiberCount,floating,position:camera.position.toArray(),wheelTravel,renderInfo:renderer.info.render};}};
  if(new URLSearchParams(location.search).get('view')==='desk')goTo('desk',true);
  window.dispatchEvent(new Event('room-ready'));
 }

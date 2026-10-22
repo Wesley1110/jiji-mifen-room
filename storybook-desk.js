@@ -7,7 +7,8 @@ export const DESK_PLACEMENT = {position: [-9.20, 0, 5.6], rotation: Math.PI / 2}
 export const FURNITURE_PLAN = {
   desk: {center: [-9.20, 5.6], facing: '+X', built: true},
   dresser: {bounds: [-9.8, -6.3, 8.50, 9.75], built: false},
-  nightstand: {bounds: [2.90, 4.50, -1.95, -.55], built: false}
+  nightstand: {bounds: [-4.75, -3.10, -2.50, -1.10], side: 'left', built: false},
+  existingNightstand: {bounds: [2.91, 4.13, -1.64, -.66], side: 'right', preserve: true, built: true}
 };
 
 function texture(draw, size = 1024) {
@@ -238,6 +239,6 @@ export function createStorybookDesk() {
 
   group.position.fromArray(DESK_PLACEMENT.position);group.rotation.y=DESK_PLACEMENT.rotation;
   let meshCount=0,triangles=0;group.traverse(o=>{if(o.isMesh){meshCount++;triangles+=(o.geometry.index?.count||o.geometry.attributes.position.count)/3;}});
-  group.userData={revision:'storybook-desk-preview-1',meshCount,triangles,placement:DESK_PLACEMENT,heartOpenings:2,cushion:'volumetric rose gingham',scope:'desk and chair only',plan:FURNITURE_PLAN};
+  group.userData={revision:'storybook-desk-1',meshCount,triangles,placement:DESK_PLACEMENT,heartOpenings:2,cushion:'volumetric rose gingham',scope:'desk and chair only',plan:FURNITURE_PLAN};
   return group;
 }
