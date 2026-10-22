@@ -3,6 +3,8 @@ import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {woodTexture,ginghamTexture,heartPath,drawFlower} from './storybook-desk.js?revision=nightstand-preview-1';
 import {createAssetPricingBook,createShadeFabric} from './bedside-materials.js?revision=nightstand-preview-2';
+import {createStarterToyPack} from './starter-toy-pack.js?revision=nightstand-preview-3';
+import {createDrawerController} from './nightstand-drawer.js?revision=nightstand-preview-3';
 
 export const NIGHTSTAND_PLACEMENT={position:[-3.925,0,-1.80],rotation:0};
 
@@ -69,14 +71,30 @@ export async function createStorybookNightstand(){
  }
  box(root,'recessed warm wooden back',[1.26,1.24,.08],[0,.93,-.52],wood,.02);
  box(root,'low open shelf',[1.44,.11,1.14],[0,.265,0],wood,.033);
- box(root,'drawer housing',[1.39,.45,1.10],[0,1.345,0],wood,.02);
- box(root,'drawer reveal',[1.38,.421,.022],[0,1.34,.558],shadow,.035);
- box(root,'rounded drawer front',[1.33,.379,.073],[0,1.345,.584],pale,.037);
- box(root,'drawer raised border',[1.26,.314,.016],[0,1.345,.626],edge,.032);
- box(root,'drawer inset face',[1.23,.287,.025],[0,1.345,.64],wood,.028);
- lathe(root,'flower knob stem',[[.025,0],[.025,.055]],[0,1.345,.667],wood).rotation.x=Math.PI/2;
- oval(root,'wooden flower drawer pull',[0,1.345,.705],[.078,.078,.045],wood);
- flower(root,[0,1.345,.749],.049,blush,ivory);
+ // A hollow housing and a complete moving tray, rather than a solid box.
+ box(root,'stationary drawer support shelf',[1.39,.055,1.10],[0,1.128,0],wood,.012);
+ for(const x of [-.647,.647])box(root,'narrow drawer opening stile',[.035,.40,.04],[x,1.345,.552],shadow,.007);
+ const drawer=new THREE.Group();drawer.name='Floral bedside | sliding drawer assembly';root.add(drawer);
+ box(drawer,'solid drawer bottom',[1.19,.039,1.032],[0,1.183,.018],pale,.009);
+ for(const x of [-.575,.575])box(drawer,'dovetailed drawer side',[.046,.280,1.024],[x,1.324,.018],upright,.009);
+ box(drawer,'drawer rear wall',[1.12,.280,.042],[0,1.324,-.473],wood,.008);
+ const liner=new THREE.MeshPhysicalMaterial({name:'Drawer | soft blush felt lining',color:'#ead3bf',roughness:1,sheen:.45,sheenColor:new THREE.Color('#ffead8')});
+ box(drawer,'soft fitted felt bottom',[1.09,.009,.959],[0,1.208,.031],liner,.014);
+ const rail=new THREE.MeshStandardMaterial({name:'Drawer | satin champagne runners',color:'#b4a68b',metalness:.45,roughness:.62});
+ for(const x of [-.611,.611]){
+  box(root,'fixed concealed drawer runner',[.016,.040,.94],[x,1.244,-.015],rail,.005);
+  box(drawer,'telescoping inner drawer runner',[.012,.026,.98],[x,1.244,-.005],rail,.004);
+  for(const z of [-.28,.28]){const screw=oval(drawer,'small flush runner screw',[x,1.244,z],[.002,.008,.008],rail);screw.castShadow=false;}
+ }
+ box(drawer,'rounded drawer front',[1.33,.379,.073],[0,1.345,.584],pale,.037);
+ box(drawer,'drawer raised border',[1.26,.314,.016],[0,1.345,.626],edge,.032);
+ box(drawer,'drawer inset face',[1.23,.287,.025],[0,1.345,.64],wood,.028);
+ lathe(drawer,'flower knob stem',[[.025,0],[.025,.055]],[0,1.345,.667],wood).rotation.x=Math.PI/2;
+ const drawerKnob=oval(drawer,'wooden flower drawer pull',[0,1.345,.705],[.078,.078,.045],wood.clone());
+ flower(drawer,[0,1.345,.749],.049,blush,ivory);
+ const pick=oval(drawer,'flower handle click target',[0,1.345,.750],[.112,.112,.112],new THREE.MeshBasicMaterial({visible:false}));pick.userData.sceneControlPick=true;pick.castShadow=false;pick.receiveShadow=false;
+ const toyPack=createStarterToyPack();toyPack.position.set(0,1.225,.031);toyPack.rotation.x=-Math.PI/2;toyPack.scale.setScalar(.72);drawer.add(toyPack);
+ root.drawerController=createDrawerController(drawer,[pick],drawerKnob);
  const apron=new THREE.Shape();apron.moveTo(-.66,.34);apron.lineTo(.66,.34);apron.lineTo(.66,.18);apron.bezierCurveTo(.53,.10,.46,.28,.31,.22);apron.bezierCurveTo(.14,.14,.10,.21,0,.19);apron.bezierCurveTo(-.10,.21,-.14,.14,-.31,.22);apron.bezierCurveTo(-.46,.28,-.53,.10,-.66,.18);apron.closePath();panel(root,'gentle scalloped shelf apron',apron,[0,0,.52],.065,wood,.018);
  box(root,'thick round edged tabletop',[1.62,.14,1.32],[0,1.66,0],wood,.064);
  box(root,'tabletop underside moulding',[1.51,.045,1.23],[0,1.571,0],pale,.018);
@@ -132,8 +150,8 @@ export async function createStorybookNightstand(){
  }
  book(root,[.35,.643,.15],[.60,.13,.61],'#d99f98',true);
  book(root,[.51,.625,.12],[.56,.11,.58],'#e7d4ad',true);
- const topBook1=book(root,[.36,1.816,.25],[.50,.09,.38],'#dda49c');topBook1.rotation.y=.19;
- const textbook=await createAssetPricingBook();textbook.position.set(.395,1.886,.245);textbook.rotation.y=-.18;root.add(textbook);
+ const topBook1=book(root,[.335,1.816,.385],[.50,.09,.38],'#dda49c');topBook1.name='Floral bedside | pink tabletop book';topBook1.rotation.y=.19;
+ const textbook=await createAssetPricingBook();textbook.position.set(.370,1.886,.380);textbook.rotation.y=-.045;root.add(textbook);
 
  // Fabric bell shade, open underneath, with rolled scallops and a heart pull.
  const lamp=new THREE.Group();lamp.name='Floral bedside | scalloped gingham bedside lamp';lamp.position.set(-.39,1.745,-.17);root.add(lamp);
@@ -206,6 +224,6 @@ export async function createStorybookNightstand(){
 
  root.position.fromArray(NIGHTSTAND_PLACEMENT.position);root.rotation.y=NIGHTSTAND_PLACEMENT.rotation;
  let meshCount=0,triangles=0;root.traverse(o=>{if(o.isMesh){meshCount++;triangles+=(o.geometry.index?.count||o.geometry.attributes.position.count)/3;}});
- root.userData={revision:'left-nightstand-preview-2',placement:NIGHTSTAND_PLACEMENT,meshCount,triangles,side:'left',rightOriginalPreserved:true,scope:'new left bedside cabinet only',drawer:'static',lamp:'woven cotton, sewn bindings and warm fixed glow',topBook:textbook.userData};
+ root.userData={revision:'left-nightstand-preview-3',placement:NIGHTSTAND_PLACEMENT,meshCount,triangles,side:'left',rightOriginalPreserved:true,scope:'new left bedside cabinet only',drawer:root.drawerController.state,toyPack:toyPack.userData,bookShift:[-.025,0,.135],lamp:'woven cotton, sewn bindings and warm fixed glow',topBook:textbook.userData};
  return root;
 }

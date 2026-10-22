@@ -97,14 +97,14 @@ export function bindDoorInteraction({door,scene,camera,canvas,onInteract}){
   pointer.set(document.pointerLockElement===canvas?0:(event.clientX-rect.left)/rect.width*2-1,document.pointerLockElement===canvas?0:-(event.clientY-rect.top)/rect.height*2+1);
   scene.updateMatrixWorld(true);ray.setFromCamera(pointer,camera);
   const target=ray.intersectObjects(door.pickTargets,false)[0];if(!target)return false;
-  const blockers=[];scene.traverse(o=>{if(o.isMesh&&isVisible(o)&&!o.userData.doorPick&&!o.userData.fiberCount&&!o.userData.isHand)blockers.push(o);});
+  const blockers=[];scene.traverse(o=>{if(o.isMesh&&isVisible(o)&&!o.userData.doorPick&&!o.userData.sceneControlPick&&!o.userData.fiberCount&&!o.userData.isHand)blockers.push(o);});
   const obstruction=ray.intersectObjects(blockers,false)[0];
   // The forgiving hit sphere extends around the visible knob; accept the
   // escutcheon and leaf immediately behind it, but never a wall in front.
   return !obstruction||obstruction.distance>=target.distance-.01;
  }
  function show(value,event){
-  hover=value;canvas.style.cursor=value?'pointer':'';
+  hover=value;canvas.dataset.doorHover=value?'true':'';canvas.style.cursor=value||canvas.dataset.drawerHover==='true'?'pointer':'';
   for(const k of door.knobs){k.material.emissive.set(value?'#7b592b':'#000000');k.material.emissiveIntensity=value?.15:0;}
   tip.hidden=!value;if(value){tip.textContent=door.group.userData.open?'點門把關門':'點門把開門';tip.style.left=Math.min(innerWidth-130,event.clientX+16)+'px';tip.style.top=Math.min(innerHeight-60,event.clientY+18)+'px';}
  }
