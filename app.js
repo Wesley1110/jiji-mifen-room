@@ -10,6 +10,7 @@ import {createBedsideSlippers} from './house-slippers.js?revision=room-details-4
 import {createFairytaleDoor,bindDoorInteraction} from './door.js?revision=plump-paw-4';
 import {createNavigation} from './navigation.js?revision=room-details-4';
 import {createPetting} from './petting.js?revision=plump-paw-4';
+import {createStorybookDesk} from './storybook-desk.js?revision=desk-preview-1';
 
 const $=id=>document.getElementById(id), viewport=$('room');
 const menu=initMenu();
@@ -26,6 +27,7 @@ const walls=[];const poses={
  blanket:{pos:[-.4,4.18,4.8],target:[-.1,2.18,1.75]},
  rug:{pos:[-7.3,5.6,3.9],target:[-6.5,.05,1.5]},
  slippers:{pos:[-5.65,2.35,3.9],target:[-3.7,.20,1.75]},
+ desk:{pos:[-5.15,4.35,9.55],target:[-8.65,1.82,5.62]},
  door:{pos:[-2.5,2.35,5.7],target:[-3.55,1.65,10.2]},
  window:{pos:[.3,4.1,5.6],target:[5.5,3.4,.6]},
  plan:{pos:[-2.6,19.5,3.51],target:[-2.6,0,3.5]}
@@ -34,7 +36,8 @@ const setPressed=(id,val)=>{$(id).classList.toggle('selected',val);$(id).setAttr
 function interact(){lastInteraction=performance.now();}
 function clearFloat(){camera.position.sub(offset);offset.set(0,0,0);}
 function goTo(name,instant=false){
- if(!orbit)return;clearFloat();setMode('orbit');const p=name==='home'&&innerWidth<innerHeight?{pos:[-2.6,10,16.8],target:[-2.6,1.22,1.5]}:poses[name];
+ if(!orbit)return;clearFloat();setMode('orbit');let p=name==='home'&&innerWidth<innerHeight?{pos:[-2.6,10,16.8],target:[-2.6,1.22,1.5]}:poses[name];
+ if(name==='desk'&&innerWidth<innerHeight)p={target:p.target,pos:p.pos.map((v,i)=>p.target[i]+(v-p.target[i])*1.22)};
  document.querySelectorAll('[data-view]').forEach(b=>{const sel=b.dataset.view===name;b.classList.toggle('active',sel);b.setAttribute('aria-pressed',String(sel));});
  if(instant){camera.position.fromArray(p.pos);orbit.target.fromArray(p.target);orbit.update();}
  else transition={start:performance.now(),p0:camera.position.clone(),t0:orbit.target.clone(),p1:new THREE.Vector3(...p.pos),t1:new THREE.Vector3(...p.target)};
@@ -96,11 +99,13 @@ async function init(){
  placeBedOccupants(gltf.scene,plush);
  const slippers=createBedsideSlippers(cloth);scene.add(slippers);meshCount+=slippers.userData.meshCount;
  door=createFairytaleDoor(gltf.scene,{canClose:()=>navigation.canClose(camera.position)});scene.add(door.group);meshCount+=door.group.userData.meshCount-door.group.userData.replacedMeshes;
+ const desk=createStorybookDesk();scene.add(desk);meshCount+=desk.userData.meshCount;
  const doorInteraction=bindDoorInteraction({door,scene,camera,canvas:renderer.domElement,onInteract:interact});
  petting=createPetting({scene,root:gltf.scene,plush,camera,canvas:renderer.domElement,getMode:()=>mode,setMode,onInteract:interact,isSceneControl:doorInteraction.hitTest});
  setPressed('float',floating);await renderer.compileAsync(scene,camera);
  ready=true;fpsTime=performance.now();renderer.setAnimationLoop(animate);$('loading').hidden=true;
- window.__room={camera,orbit,renderer,scene,goTo,setMode,keys,door,navigation,petting,get status(){return {ready,revision:'plump-paw-4',furRevision:'plush-touch-1',petting:petting.status,bed:bed.userData,slippers:slippers.userData,door:door.group.userData,navigation:{area:navigation.region(camera.position),hallwayAccess:true},menu:menu.state,backend:actualGPU?'WebGPU':'WebGL2',mode,meshCount,fiberCount,floating,position:camera.position.toArray(),wheelTravel,renderInfo:renderer.info.render};}};
+ window.__room={camera,orbit,renderer,scene,goTo,setMode,keys,door,navigation,petting,desk,get status(){return {ready,revision:'desk-preview-1',furRevision:'plush-touch-1',petting:petting.status,bed:bed.userData,desk:desk.userData,slippers:slippers.userData,door:door.group.userData,navigation:{area:navigation.region(camera.position),hallwayAccess:true},menu:menu.state,backend:actualGPU?'WebGPU':'WebGL2',mode,meshCount,fiberCount,floating,position:camera.position.toArray(),wheelTravel,renderInfo:renderer.info.render};}};
+ if(new URLSearchParams(location.search).get('view')==='desk')goTo('desk',true);
  window.dispatchEvent(new Event('room-ready'));
 }
 function animate(time){
