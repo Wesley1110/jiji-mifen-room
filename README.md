@@ -46,4 +46,6 @@ Three.js 授權見 [vendor/THREE-LICENSE.txt](vendor/THREE-LICENSE.txt)。
 
 ## 新左床頭櫃本機預覽
 
-`nightstand-preview-1` 依花語床頭櫃參考圖製作：圓角檜木櫃、花朵把手、格紋蕾絲桌布、布罩檯燈、心形葉植栽、小雞擺飾、花形盤、編織籃與書本。點「左床頭櫃」或開啟 `http://127.0.0.1:4174/?view=nightstand` 查看。右側原有床頭櫃保留；抽屜與燈目前為靜態設計。新櫃體尚未發布，線上版為已確認的 `storybook-desk-1`。
+`nightstand-preview-2` 依花語床頭櫃參考圖製作：圓角檜木櫃、花朵把手、格紋蕾絲桌布、布罩檯燈、心形葉植栽、小雞擺飾、花形盤、編織籃與書本。點「左床頭櫃」或開啟 `http://127.0.0.1:4174/?view=nightstand` 查看。右側原有床頭櫃保留；抽屜與燈目前為靜態設計。新櫃體尚未發布，線上版為已確認的 `storybook-desk-1`。
+
+床頭櫃第二版：最上層換成使用者提供封面的 John H. Cochrane《Asset Pricing, Revised Edition》，製作厚硬殼、印字書脊與細書頁，兩本書錯開角度。燈罩與蝴蝶結加入棉布織紋、細微表面起伏、柔和纖維反光及滾邊縫線。書封原圖保存在 `assets/asset-pricing-cover.png`（來源版位於 `dist/assets/`），其著作權歸原權利人；其他房間原始參考圖未打包。此版仍僅供本機預覽。

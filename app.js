@@ -11,7 +11,7 @@ import {createFairytaleDoor,bindDoorInteraction} from './door.js?revision=plump-
 import {createNavigation} from './navigation.js?revision=room-details-4';
 import {createPetting} from './petting.js?revision=plump-paw-4';
 import {createStorybookDesk} from './storybook-desk.js?revision=nightstand-preview-1';
-import {createStorybookNightstand} from './storybook-nightstand.js?revision=nightstand-preview-1';
+import {createStorybookNightstand} from './storybook-nightstand.js?revision=nightstand-preview-2';
 
 const $=id=>document.getElementById(id), viewport=$('room');
 const menu=initMenu();
@@ -102,12 +102,12 @@ async function init(){
  const slippers=createBedsideSlippers(cloth);scene.add(slippers);meshCount+=slippers.userData.meshCount;
  door=createFairytaleDoor(gltf.scene,{canClose:()=>navigation.canClose(camera.position)});scene.add(door.group);meshCount+=door.group.userData.meshCount-door.group.userData.replacedMeshes;
  const desk=createStorybookDesk();scene.add(desk);meshCount+=desk.userData.meshCount;
- const nightstand=createStorybookNightstand();scene.add(nightstand);meshCount+=nightstand.userData.meshCount;
+ const nightstand=await createStorybookNightstand();scene.add(nightstand);meshCount+=nightstand.userData.meshCount;
  const doorInteraction=bindDoorInteraction({door,scene,camera,canvas:renderer.domElement,onInteract:interact});
  petting=createPetting({scene,root:gltf.scene,plush,camera,canvas:renderer.domElement,getMode:()=>mode,setMode,onInteract:interact,isSceneControl:doorInteraction.hitTest});
  setPressed('float',floating);await renderer.compileAsync(scene,camera);
  ready=true;fpsTime=performance.now();renderer.setAnimationLoop(animate);$('loading').hidden=true;
- window.__room={camera,orbit,renderer,scene,goTo,setMode,keys,door,navigation,petting,desk,nightstand,get status(){return {ready,revision:'nightstand-preview-1',furRevision:'plush-touch-1',petting:petting.status,bed:bed.userData,desk:desk.userData,nightstand:nightstand.userData,slippers:slippers.userData,door:door.group.userData,navigation:{area:navigation.region(camera.position),hallwayAccess:true},menu:menu.state,backend:actualGPU?'WebGPU':'WebGL2',mode,meshCount,fiberCount,floating,position:camera.position.toArray(),wheelTravel,renderInfo:renderer.info.render};}};
+ window.__room={camera,orbit,renderer,scene,goTo,setMode,keys,door,navigation,petting,desk,nightstand,get status(){return {ready,revision:'nightstand-preview-2',furRevision:'plush-touch-1',petting:petting.status,bed:bed.userData,desk:desk.userData,nightstand:nightstand.userData,slippers:slippers.userData,door:door.group.userData,navigation:{area:navigation.region(camera.position),hallwayAccess:true},menu:menu.state,backend:actualGPU?'WebGPU':'WebGL2',mode,meshCount,fiberCount,floating,position:camera.position.toArray(),wheelTravel,renderInfo:renderer.info.render};}};
  const requestedView=new URLSearchParams(location.search).get('view');if(Object.hasOwn(poses,requestedView))goTo(requestedView,true);
  window.dispatchEvent(new Event('room-ready'));
 }

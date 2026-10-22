@@ -1,10 +1,12 @@
 import * as THREE from 'three/webgpu';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
+import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {woodTexture,ginghamTexture,heartPath,drawFlower} from './storybook-desk.js?revision=nightstand-preview-1';
+import {createAssetPricingBook,createShadeFabric} from './bedside-materials.js?revision=nightstand-preview-2';
 
 export const NIGHTSTAND_PLACEMENT={position:[-3.925,0,-1.80],rotation:0};
 
-export function createStorybookNightstand(){
+export async function createStorybookNightstand(){
  const root=new THREE.Group();root.name='Left floral hinoki bedside cabinet';
  const timber=woodTexture(),grain=timber.clone();grain.center.set(.5,.5);grain.rotation=Math.PI/2;
  const wood=new THREE.MeshPhysicalMaterial({name:'Bedside | satin hinoki',map:timber,roughness:.63,specularIntensity:.27,clearcoat:.06,clearcoatRoughness:.7});
@@ -37,14 +39,14 @@ export function createStorybookNightstand(){
   for(let i=0;i<5;i++){const a=i*Math.PI*2/5;const o=oval(g,'stitched flower petal',[Math.sin(a)*r*.56,Math.cos(a)*r*.56,0],[r*.38,r*.46,r*.13],petal);o.rotation.z=-a;}
   oval(g,'flower heart',[0,0,r*.12],[r*.23,r*.23,r*.16],centre);return g;
  }
- function bow(parent,p,scale){
+ function bow(parent,p,scale,ribbonMat=blush,foldMat=pink){
   const g=new THREE.Group();g.name='Floral bedside | soft pink ribbon bow';g.position.fromArray(p);g.scale.setScalar(scale);parent.add(g);
   for(const side of [-1,1]){
-   const s=new THREE.Shape();s.moveTo(side*.025,0);s.bezierCurveTo(side*.13,.09,side*.32,.18,side*.35,.10);s.bezierCurveTo(side*.40,-.10,side*.30,-.15,side*.20,-.09);s.lineTo(side*.025,-.025);s.closePath();panel(g,'folded ribbon loop',s,[0,0,0],.045,blush,.012);
-   tube(g,'ribbon seam',[[side*.07,.0,.06],[side*.19,.06,.065],[side*.29,.07,.05]],.006,pink);
-   const tail=new THREE.Shape();tail.moveTo(side*.03,-.03);tail.bezierCurveTo(side*.08,-.14,side*.13,-.26,side*.13,-.38);tail.lineTo(side*.07,-.33);tail.lineTo(side*.01,-.39);tail.bezierCurveTo(side*.01,-.23,-side*.02,-.12,-side*.02,-.04);tail.closePath();panel(g,'v-cut ribbon tail',tail,[0,0,-.015],.012,blush,.005);
+   const s=new THREE.Shape();s.moveTo(side*.025,0);s.bezierCurveTo(side*.13,.09,side*.32,.18,side*.35,.10);s.bezierCurveTo(side*.40,-.10,side*.30,-.15,side*.20,-.09);s.lineTo(side*.025,-.025);s.closePath();panel(g,'folded ribbon loop',s,[0,0,0],.045,ribbonMat,.012);
+   tube(g,'ribbon seam',[[side*.07,.0,.06],[side*.19,.06,.065],[side*.29,.07,.05]],.006,foldMat);
+   const tail=new THREE.Shape();tail.moveTo(side*.03,-.03);tail.bezierCurveTo(side*.08,-.14,side*.13,-.26,side*.13,-.38);tail.lineTo(side*.07,-.33);tail.lineTo(side*.01,-.39);tail.bezierCurveTo(side*.01,-.23,-side*.02,-.12,-side*.02,-.04);tail.closePath();panel(g,'v-cut ribbon tail',tail,[0,0,-.015],.012,ribbonMat,.005);
   }
-  oval(g,'gathered ribbon knot',[0,0,.045],[.055,.065,.053],pink);return g;
+  oval(g,'gathered ribbon knot',[0,0,.045],[.055,.065,.053],foldMat);return g;
  }
  const roundPerimeter=(t,rx,rz,power=.25)=>{const a=t*Math.PI*2;return [Math.sign(Math.cos(a))*Math.abs(Math.cos(a))**power*rx,Math.sign(Math.sin(a))*Math.abs(Math.sin(a))**power*rz];};
  function cloth(parent,name,p,rx,rz,mat){
@@ -130,27 +132,37 @@ export function createStorybookNightstand(){
  }
  book(root,[.35,.643,.15],[.60,.13,.61],'#d99f98',true);
  book(root,[.51,.625,.12],[.56,.11,.58],'#e7d4ad',true);
- const topBook1=book(root,[.39,1.816,.25],[.48,.09,.34],'#dda49c');topBook1.rotation.y=-.09;
- const topBook2=book(root,[.37,1.925,.24],[.46,.09,.33],'#efe0c5');topBook2.rotation.y=.035;
+ const topBook1=book(root,[.36,1.816,.25],[.50,.09,.38],'#dda49c');topBook1.rotation.y=.19;
+ const textbook=await createAssetPricingBook();textbook.position.set(.395,1.886,.245);textbook.rotation.y=-.18;root.add(textbook);
 
  // Fabric bell shade, open underneath, with rolled scallops and a heart pull.
  const lamp=new THREE.Group();lamp.name='Floral bedside | scalloped gingham bedside lamp';lamp.position.set(-.39,1.745,-.17);root.add(lamp);
  lathe(lamp,'turned hinoki lamp base',[[0,0],[.18,0],[.205,.022],[.207,.06],[.18,.105],[.09,.12],[0,.12]],[0,0,0],wood);
  lathe(lamp,'rounded wooden lamp stem',[[.046,.09],[.048,.14],[.041,.58],[.052,.62]],[0,0,0],upright);
- const lampCloth=cotton.clone();lampCloth.name='Bedside | softly glowing shade fabric';lampCloth.side=THREE.DoubleSide;lampCloth.emissive=new THREE.Color('#f8d69c');lampCloth.emissiveIntensity=.17;
- const shadePos=[],shadeUV=[],shadeIndices=[],bottom=[],top=[],n=144,levels=24;
+ const lampCloth=createShadeFabric();
+ const ribbonCloth=lampCloth.clone();ribbonCloth.name='Bedside | woven blush cotton binding';ribbonCloth.map=null;ribbonCloth.color.set('#e7b6ac');ribbonCloth.emissiveIntensity=0;ribbonCloth.normalScale.set(.30,.30);
+ const ribbonFold=ribbonCloth.clone();ribbonFold.color.set('#d9a49c');
+ const shadePos=[],shadeUV=[],shadeIndices=[],bottom=[],top=[],n=192,levels=32;
+ const shadeRadius=(a,t)=>.348*(1-t)+.205*t+.015*Math.sin(t*Math.PI)+.0027*Math.cos(a*24+.10*Math.sin(t*Math.PI))*(.2+.8*Math.sin(t*Math.PI));
  for(let j=0;j<=levels;j++)for(let i=0;i<=n;i++){
-  const t=j/levels,a=i/n*Math.PI*2,scallop=.024*(1-Math.cos(a*12)),r=.348*(1-t)+.205*t+.015*Math.sin(t*Math.PI);
+  const t=j/levels,a=i/n*Math.PI*2,scallop=.024*(1-Math.cos(a*12)),r=shadeRadius(a,t);
   const y=.56+t*.49-scallop*(1-t)**6;
   shadePos.push(r*Math.cos(a),y,r*Math.sin(a));shadeUV.push(i/n*2,t);
   if(j===0)bottom.push([r*Math.cos(a),y,r*Math.sin(a)]);if(j===levels)top.push([r*Math.cos(a),y+.008*Math.sin(a*12),r*Math.sin(a)]);
   if(j<levels&&i<n){const k=j*(n+1)+i;shadeIndices.push(k,k+n+1,k+1,k+1,k+n+1,k+n+2);}
  }
  const shadeGeo=new THREE.BufferGeometry();shadeGeo.setAttribute('position',new THREE.Float32BufferAttribute(shadePos,3));shadeGeo.setAttribute('uv',new THREE.Float32BufferAttribute(shadeUV,2));shadeGeo.setIndex(shadeIndices);shadeGeo.computeVertexNormals();mesh(lamp,'open bell shaped gingham shade',shadeGeo,lampCloth);
- tube(lamp,'scalloped rose shade binding',bottom,.014,blush);tube(lamp,'ruffled top shade rim',top,.011,blush);
- const liningShade=new THREE.MeshStandardMaterial({color:'#fff0c4',roughness:1,side:THREE.BackSide,emissive:'#ffe1a7',emissiveIntensity:.22});const inner=mesh(lamp,'warm ivory shade lining',shadeGeo,liningShade);inner.scale.set(.987,1,.987);
+ tube(lamp,'scalloped rose shade binding',bottom,.014,ribbonCloth);tube(lamp,'ruffled top shade rim',top,.011,ribbonCloth);
+ const liningShade=lampCloth.clone();liningShade.name='Bedside | separate warm cotton shade lining';liningShade.map=null;liningShade.color.set('#fff0d7');liningShade.side=THREE.BackSide;liningShade.emissiveIntensity=.12;const inner=mesh(lamp,'warm ivory shade lining',shadeGeo,liningShade);inner.scale.set(.984,1,.984);
+ // Running stitches follow both bindings, kept in one mesh for inexpensive rendering.
+ const stitches=[];
+ for(const t of [.035,.975])for(let i=0;i<144;i++){
+  const points=[-.0027,.0027].map(delta=>{const a=i/144*Math.PI*2+delta/(t>.5?.21:.34),r=shadeRadius(a,t)+.0019;return new THREE.Vector3(r*Math.cos(a),.56+t*.49-.024*(1-Math.cos(a*12))*(1-t)**6,r*Math.sin(a));});
+  const d=points[1].clone().sub(points[0]),g=new THREE.CylinderGeometry(.0008,.0008,d.length(),5,1);g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize()));const c=points[0].clone().add(points[1]).multiplyScalar(.5);g.translate(c.x,c.y,c.z);stitches.push(g);
+ }
+ const sewn=mesh(lamp,'fine running stitches on fabric binding',mergeGeometries(stitches),thread);sewn.castShadow=false;stitches.forEach(g=>g.dispose());
  const bulbMat=new THREE.MeshStandardMaterial({color:'#fff4d4',emissive:'#ffe6ae',emissiveIntensity:.7,roughness:.8});oval(lamp,'warm lamp bulb',[0,.65,0],[.065,.085,.065],bulbMat);
- bow(lamp,[.055,.98,.235],.37);
+ bow(lamp,[.055,.98,.235],.37,ribbonCloth,ribbonFold);
  tube(lamp,'heart pull cord',[[.21,.58,.08],[.21,.40,.08],[.21,.32,.08]],.004,thread);
  panel(lamp,'little blush heart pull',heartPath(0,0,.09),[.21,.29,.068],.024,blush,.006);
  const glow=new THREE.PointLight('#ffdfb0',.42,1.9,2);glow.name='Floral bedside | gentle lamp glow';glow.position.set(0,.54,0);lamp.add(glow);
@@ -194,6 +206,6 @@ export function createStorybookNightstand(){
 
  root.position.fromArray(NIGHTSTAND_PLACEMENT.position);root.rotation.y=NIGHTSTAND_PLACEMENT.rotation;
  let meshCount=0,triangles=0;root.traverse(o=>{if(o.isMesh){meshCount++;triangles+=(o.geometry.index?.count||o.geometry.attributes.position.count)/3;}});
- root.userData={revision:'left-nightstand-preview-1',placement:NIGHTSTAND_PLACEMENT,meshCount,triangles,side:'left',rightOriginalPreserved:true,scope:'new left bedside cabinet only',drawer:'static',lamp:'warm fixed glow'};
+ root.userData={revision:'left-nightstand-preview-2',placement:NIGHTSTAND_PLACEMENT,meshCount,triangles,side:'left',rightOriginalPreserved:true,scope:'new left bedside cabinet only',drawer:'static',lamp:'woven cotton, sewn bindings and warm fixed glow',topBook:textbook.userData};
  return root;
 }
