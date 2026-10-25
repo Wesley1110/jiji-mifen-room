@@ -13,6 +13,7 @@ import {createPetting} from './petting.js?revision=plump-paw-4';
 import {createStorybookDesk} from './storybook-desk.js?revision=nightstand-preview-1';
 import {createStorybookNightstand} from './storybook-nightstand.js?revision=nightstand-v5';
 import {bindDrawerInteraction} from './nightstand-drawer.js?revision=nightstand-v5';
+import {createHallwayGallery} from './hallway-gallery.js?revision=hallway-gallery-1';
 
 const $=id=>document.getElementById(id), viewport=$('room');
 const menu=initMenu();
@@ -33,6 +34,7 @@ const walls=[];const poses={
  nightstand:{pos:[-6.55,3.65,1.15],target:[-3.925,1.55,-1.8]},
  drawer:{pos:[-4.02,2.55,-.18],target:[-3.925,1.28,-.81]},
  door:{pos:[-2.5,2.35,5.7],target:[-3.55,1.65,10.2]},
+ gallery:{pos:[-6.8,2.55,14.89],target:[2.044,2.27,14.89]},
  window:{pos:[.3,4.1,5.6],target:[5.5,3.4,.6]},
  plan:{pos:[-2.6,19.5,3.51],target:[-2.6,0,3.5]}
 };
@@ -41,6 +43,7 @@ function interact(){lastInteraction=performance.now();}
 function clearFloat(){camera.position.sub(offset);offset.set(0,0,0);}
 function goTo(name,instant=false){
  if(!orbit)return;clearFloat();setMode('orbit');let p=name==='home'&&innerWidth<innerHeight?{pos:[-2.6,10,16.8],target:[-2.6,1.22,1.5]}:poses[name];
+ if(name==='gallery'){const distance=THREE.MathUtils.clamp(10.15/(2*Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*camera.aspect),4.8,10.5);p={pos:[2.044-distance,2.55,14.89],target:[2.044,2.27,14.89]};}
  // Consume residual drag momentum without moving the start pose of a preset.
  // Otherwise a quick view selected immediately after dragging keeps drifting.
  const damping=orbit.enableDamping,priorPosition=camera.position.clone(),priorTarget=orbit.target.clone();
@@ -110,14 +113,16 @@ async function init(){
  door=createFairytaleDoor(gltf.scene,{canClose:()=>navigation.canClose(camera.position)});scene.add(door.group);meshCount+=door.group.userData.meshCount-door.group.userData.replacedMeshes;
  const desk=createStorybookDesk();scene.add(desk);meshCount+=desk.userData.meshCount;
  const nightstand=await createStorybookNightstand();scene.add(nightstand);meshCount+=nightstand.userData.meshCount;
+ $('loadText').textContent='掛上走廊的四幅照片';
+ const gallery=await createHallwayGallery();scene.add(gallery);meshCount+=gallery.userData.meshCount;
  drawer=nightstand.drawerController;
  const doorInteraction=bindDoorInteraction({door,scene,camera,canvas:renderer.domElement,onInteract:interact});
  const drawerInteraction=bindDrawerInteraction({drawer,scene,camera,canvas:renderer.domElement,onInteract:interact});
  petting=createPetting({scene,root:gltf.scene,plush,camera,canvas:renderer.domElement,getMode:()=>mode,setMode,onInteract:interact,isSceneControl:e=>doorInteraction.hitTest(e)||drawerInteraction.hitTest(e)});
  setPressed('float',floating);await renderer.compileAsync(scene,camera);
  ready=true;fpsTime=performance.now();renderer.setAnimationLoop(animate);$('loading').hidden=true;
- window.__room={camera,orbit,renderer,scene,goTo,setMode,keys,door,drawer,navigation,petting,desk,nightstand,get status(){return {ready,revision:'nightstand-v5',furRevision:'plush-touch-1',petting:petting.status,bed:bed.userData,desk:desk.userData,nightstand:nightstand.userData,slippers:slippers.userData,door:door.group.userData,navigation:{area:navigation.region(camera.position),hallwayAccess:true},menu:menu.state,backend:actualGPU?'WebGPU':'WebGL2',mode,meshCount,fiberCount,floating,position:camera.position.toArray(),wheelTravel,renderInfo:renderer.info.render};}};
- const requestedView=new URLSearchParams(location.search).get('view');if(Object.hasOwn(poses,requestedView))goTo(requestedView,true);
+ window.__room={camera,orbit,renderer,scene,goTo,setMode,keys,door,drawer,navigation,petting,desk,nightstand,gallery,get status(){return {ready,revision:'hallway-gallery-1',furRevision:'plush-touch-1',petting:petting.status,bed:bed.userData,desk:desk.userData,nightstand:nightstand.userData,gallery:gallery.userData,slippers:slippers.userData,door:door.group.userData,navigation:{area:navigation.region(camera.position),hallwayAccess:true},menu:menu.state,backend:actualGPU?'WebGPU':'WebGL2',mode,meshCount,fiberCount,floating,position:camera.position.toArray(),wheelTravel,renderInfo:renderer.info.render};}};
+ const rawView=new URLSearchParams(location.search).get('view'),requestedView=rawView==='characters'?'gallery':rawView;if(Object.hasOwn(poses,requestedView))goTo(requestedView,true);
  window.dispatchEvent(new Event('room-ready'));
 }
 function animate(time){
