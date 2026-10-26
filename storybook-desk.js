@@ -6,7 +6,7 @@ import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
 export const DESK_PLACEMENT = {position: [-9.20, 0, 5.6], rotation: Math.PI / 2};
 export const FURNITURE_PLAN = {
   desk: {center: [-9.20, 5.6], facing: '+X', built: true},
-  dresser: {bounds: [-9.8, -6.3, 8.50, 9.75], built: false},
+  dresser: {bounds: [3.61, 5.13, 3.88, 7.36], facing: '-X', wall: 'window', built: true, preview: false},
   nightstand: {bounds: [-4.74, -3.09, -2.46, -1.03], side: 'left', built: true, preview: true},
   existingNightstand: {bounds: [2.91, 4.13, -1.64, -.66], side: 'right', preserve: true, built: true}
 };

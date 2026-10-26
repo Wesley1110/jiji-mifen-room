@@ -14,6 +14,7 @@ import {createStorybookDesk} from './storybook-desk.js?revision=nightstand-previ
 import {createStorybookNightstand} from './storybook-nightstand.js?revision=nightstand-v5';
 import {bindDrawerInteraction} from './nightstand-drawer.js?revision=nightstand-v5';
 import {createHallwayGallery} from './hallway-gallery.js?revision=hallway-gallery-1';
+import {createStorybookDresser} from './storybook-dresser.js?revision=window-dresser-3';
 
 const $=id=>document.getElementById(id), viewport=$('room');
 const menu=initMenu();
@@ -32,6 +33,7 @@ const walls=[];const poses={
  slippers:{pos:[-5.65,2.35,3.9],target:[-3.7,.20,1.75]},
  desk:{pos:[-5.15,4.35,9.55],target:[-8.65,1.82,5.62]},
  nightstand:{pos:[-6.55,3.65,1.15],target:[-3.925,1.55,-1.8]},
+ dresser:{pos:[-.15,3.90,2.55],target:[4.37,1.90,5.62]},
  drawer:{pos:[-4.02,2.55,-.18],target:[-3.925,1.28,-.81]},
  door:{pos:[-2.5,2.35,5.7],target:[-3.55,1.65,10.2]},
  gallery:{pos:[-6.8,2.55,14.89],target:[2.044,2.27,14.89]},
@@ -49,7 +51,7 @@ function goTo(name,instant=false){
  const damping=orbit.enableDamping,priorPosition=camera.position.clone(),priorTarget=orbit.target.clone();
  orbit.enableDamping=false;orbit.update();camera.position.copy(priorPosition);orbit.target.copy(priorTarget);orbit.update();orbit.enableDamping=damping;
  if(name==='drawer')drawer?.setOpen(true);
- if(name==='desk'&&innerWidth<innerHeight)p={target:p.target,pos:p.pos.map((v,i)=>p.target[i]+(v-p.target[i])*1.22)};
+ if((name==='desk'||name==='dresser')&&innerWidth<innerHeight)p={target:p.target,pos:p.pos.map((v,i)=>p.target[i]+(v-p.target[i])*1.22)};
  document.querySelectorAll('[data-view]').forEach(b=>{const sel=b.dataset.view===name;b.classList.toggle('active',sel);b.setAttribute('aria-pressed',String(sel));});
  if(instant){camera.position.fromArray(p.pos);orbit.target.fromArray(p.target);orbit.update();camera.updateMatrixWorld(true);}
  else transition={start:performance.now(),p0:camera.position.clone(),t0:orbit.target.clone(),p1:new THREE.Vector3(...p.pos),t1:new THREE.Vector3(...p.target)};
@@ -113,6 +115,7 @@ async function init(){
  door=createFairytaleDoor(gltf.scene,{canClose:()=>navigation.canClose(camera.position)});scene.add(door.group);meshCount+=door.group.userData.meshCount-door.group.userData.replacedMeshes;
  const desk=createStorybookDesk();scene.add(desk);meshCount+=desk.userData.meshCount;
  const nightstand=await createStorybookNightstand();scene.add(nightstand);meshCount+=nightstand.userData.meshCount;
+ const dresser=createStorybookDresser();scene.add(dresser);meshCount+=dresser.userData.meshCount;
  $('loadText').textContent='掛上走廊的四幅照片';
  const gallery=await createHallwayGallery();scene.add(gallery);meshCount+=gallery.userData.meshCount;
  drawer=nightstand.drawerController;
@@ -121,7 +124,7 @@ async function init(){
  petting=createPetting({scene,root:gltf.scene,plush,camera,canvas:renderer.domElement,getMode:()=>mode,setMode,onInteract:interact,isSceneControl:e=>doorInteraction.hitTest(e)||drawerInteraction.hitTest(e)});
  setPressed('float',floating);await renderer.compileAsync(scene,camera);
  ready=true;fpsTime=performance.now();renderer.setAnimationLoop(animate);$('loading').hidden=true;
- window.__room={camera,orbit,renderer,scene,goTo,setMode,keys,door,drawer,navigation,petting,desk,nightstand,gallery,get status(){return {ready,revision:'hallway-gallery-1',furRevision:'plush-touch-1',petting:petting.status,bed:bed.userData,desk:desk.userData,nightstand:nightstand.userData,gallery:gallery.userData,slippers:slippers.userData,door:door.group.userData,navigation:{area:navigation.region(camera.position),hallwayAccess:true},menu:menu.state,backend:actualGPU?'WebGPU':'WebGL2',mode,meshCount,fiberCount,floating,position:camera.position.toArray(),wheelTravel,renderInfo:renderer.info.render};}};
+ window.__room={camera,orbit,renderer,scene,goTo,setMode,keys,door,drawer,navigation,petting,desk,nightstand,dresser,gallery,get status(){return {ready,revision:'window-dresser-3',furRevision:'plush-touch-1',petting:petting.status,bed:bed.userData,desk:desk.userData,nightstand:nightstand.userData,dresser:dresser.userData,gallery:gallery.userData,slippers:slippers.userData,door:door.group.userData,navigation:{area:navigation.region(camera.position),hallwayAccess:true},menu:menu.state,backend:actualGPU?'WebGPU':'WebGL2',mode,meshCount,fiberCount,floating,position:camera.position.toArray(),wheelTravel,renderInfo:renderer.info.render};}};
  const rawView=new URLSearchParams(location.search).get('view'),requestedView=rawView==='characters'?'gallery':rawView;if(Object.hasOwn(poses,requestedView))goTo(requestedView,true);
  window.dispatchEvent(new Event('room-ready'));
 }
