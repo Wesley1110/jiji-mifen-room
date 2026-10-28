@@ -15,12 +15,14 @@ import {createStorybookNightstand} from './storybook-nightstand.js?revision=nigh
 import {bindDrawerInteraction} from './nightstand-drawer.js?revision=nightstand-v5';
 import {createHallwayGallery} from './hallway-gallery.js?revision=hallway-gallery-1';
 import {createStorybookDresser} from './storybook-dresser.js?revision=window-dresser-3';
+import {createStorybookWardrobe} from './storybook-wardrobe.js?revision=bunny-wardrobe-3';
+import {bindWardrobeInteraction} from './wardrobe-interaction.js?revision=bunny-wardrobe-3';
 
 const $=id=>document.getElementById(id), viewport=$('room');
 const menu=initMenu();
 const camera=new THREE.PerspectiveCamera(innerWidth<innerHeight?82:54,innerWidth/innerHeight,.05,200);
 const scene=new THREE.Scene();scene.background=new THREE.Color('#efe2d1');
-let renderer,orbit,plush,door,drawer,petting,mode='orbit',floating=!matchMedia('(prefers-reduced-motion: reduce)').matches;
+let renderer,orbit,plush,door,drawer,wardrobeController,petting,mode='orbit',floating=!matchMedia('(prefers-reduced-motion: reduce)').matches;
 const navigation=createNavigation(()=>door?.group.userData.angle||0);
 let lastInteraction=0,transition=null,drag=null,lastTime=0,frames=0,fpsTime=0,ready=false;
 let wheelTravel=0;
@@ -34,6 +36,7 @@ const walls=[];const poses={
  desk:{pos:[-5.15,4.35,9.55],target:[-8.65,1.82,5.62]},
  nightstand:{pos:[-6.55,3.65,1.15],target:[-3.925,1.55,-1.8]},
  dresser:{pos:[-.15,3.90,2.55],target:[4.37,1.90,5.62]},
+ wardrobe:{pos:[3.55,3.65,1.80],target:[1.30,2.43,9.18]},
  drawer:{pos:[-4.02,2.55,-.18],target:[-3.925,1.28,-.81]},
  door:{pos:[-2.5,2.35,5.7],target:[-3.55,1.65,10.2]},
  gallery:{pos:[-6.8,2.55,14.89],target:[2.044,2.27,14.89]},
@@ -51,7 +54,7 @@ function goTo(name,instant=false){
  const damping=orbit.enableDamping,priorPosition=camera.position.clone(),priorTarget=orbit.target.clone();
  orbit.enableDamping=false;orbit.update();camera.position.copy(priorPosition);orbit.target.copy(priorTarget);orbit.update();orbit.enableDamping=damping;
  if(name==='drawer')drawer?.setOpen(true);
- if((name==='desk'||name==='dresser')&&innerWidth<innerHeight)p={target:p.target,pos:p.pos.map((v,i)=>p.target[i]+(v-p.target[i])*1.22)};
+ if((name==='desk'||name==='dresser'||name==='wardrobe')&&innerWidth<innerHeight)p={target:p.target,pos:p.pos.map((v,i)=>p.target[i]+(v-p.target[i])*1.22)};
  document.querySelectorAll('[data-view]').forEach(b=>{const sel=b.dataset.view===name;b.classList.toggle('active',sel);b.setAttribute('aria-pressed',String(sel));});
  if(instant){camera.position.fromArray(p.pos);orbit.target.fromArray(p.target);orbit.update();camera.updateMatrixWorld(true);}
  else transition={start:performance.now(),p0:camera.position.clone(),t0:orbit.target.clone(),p1:new THREE.Vector3(...p.pos),t1:new THREE.Vector3(...p.target)};
@@ -116,15 +119,17 @@ async function init(){
  const desk=createStorybookDesk();scene.add(desk);meshCount+=desk.userData.meshCount;
  const nightstand=await createStorybookNightstand();scene.add(nightstand);meshCount+=nightstand.userData.meshCount;
  const dresser=createStorybookDresser();scene.add(dresser);meshCount+=dresser.userData.meshCount;
+ const wardrobe=createStorybookWardrobe();scene.add(wardrobe);meshCount+=wardrobe.userData.meshCount;wardrobeController=wardrobe.wardrobeController;
  $('loadText').textContent='掛上走廊的四幅照片';
  const gallery=await createHallwayGallery();scene.add(gallery);meshCount+=gallery.userData.meshCount;
  drawer=nightstand.drawerController;
  const doorInteraction=bindDoorInteraction({door,scene,camera,canvas:renderer.domElement,onInteract:interact});
  const drawerInteraction=bindDrawerInteraction({drawer,scene,camera,canvas:renderer.domElement,onInteract:interact});
- petting=createPetting({scene,root:gltf.scene,plush,camera,canvas:renderer.domElement,getMode:()=>mode,setMode,onInteract:interact,isSceneControl:e=>doorInteraction.hitTest(e)||drawerInteraction.hitTest(e)});
+ const wardrobeInteraction=bindWardrobeInteraction({wardrobe:wardrobeController,scene,camera,canvas:renderer.domElement,onInteract:interact});
+ petting=createPetting({scene,root:gltf.scene,plush,camera,canvas:renderer.domElement,getMode:()=>mode,setMode,onInteract:interact,isSceneControl:e=>doorInteraction.hitTest(e)||drawerInteraction.hitTest(e)||wardrobeInteraction.hitTest(e)});
  setPressed('float',floating);await renderer.compileAsync(scene,camera);
  ready=true;fpsTime=performance.now();renderer.setAnimationLoop(animate);$('loading').hidden=true;
- window.__room={camera,orbit,renderer,scene,goTo,setMode,keys,door,drawer,navigation,petting,desk,nightstand,dresser,gallery,get status(){return {ready,revision:'window-dresser-3',furRevision:'plush-touch-1',petting:petting.status,bed:bed.userData,desk:desk.userData,nightstand:nightstand.userData,dresser:dresser.userData,gallery:gallery.userData,slippers:slippers.userData,door:door.group.userData,navigation:{area:navigation.region(camera.position),hallwayAccess:true},menu:menu.state,backend:actualGPU?'WebGPU':'WebGL2',mode,meshCount,fiberCount,floating,position:camera.position.toArray(),wheelTravel,renderInfo:renderer.info.render};}};
+ window.__room={camera,orbit,renderer,scene,goTo,setMode,keys,door,drawer,navigation,petting,desk,nightstand,dresser,wardrobe,gallery,get status(){return {ready,revision:'bunny-wardrobe-3',furRevision:'plush-touch-1',petting:petting.status,bed:bed.userData,desk:desk.userData,nightstand:nightstand.userData,dresser:dresser.userData,wardrobe:wardrobe.userData,gallery:gallery.userData,slippers:slippers.userData,door:door.group.userData,navigation:{area:navigation.region(camera.position),hallwayAccess:true},menu:menu.state,backend:actualGPU?'WebGPU':'WebGL2',mode,meshCount,fiberCount,floating,position:camera.position.toArray(),wheelTravel,renderInfo:renderer.info.render};}};
  const rawView=new URLSearchParams(location.search).get('view'),requestedView=rawView==='characters'?'gallery':rawView;if(Object.hasOwn(poses,requestedView))goTo(requestedView,true);
  window.dispatchEvent(new Event('room-ready'));
 }
@@ -146,7 +151,7 @@ function animate(time){
  const interiorView=mode==='fly'||navigation.inHallway(camera.position);
  for(const w of walls){w.mesh.visible=interiorView||!(w.name.startsWith('Wall 01')&&camera.position.z< -3.2 || w.name.startsWith('Wall 02')&&camera.position.x< -10.65 || w.name.startsWith('Wall 03')&&camera.position.z>10.15 || w.name.startsWith('Wall 04')&&camera.position.x>5.45);}
  if(door){door.group.visible=interiorView||camera.position.z<=10.15;door.update(time,camera.position);}
- drawer?.update(time);petting?.update(time,dt);plush?.userData.updateLOD(camera);renderer.render(scene,camera);frames++;if(time-fpsTime>1000){$('fps').textContent=`${Math.round(frames*1000/(time-fpsTime))} fps`;frames=0;fpsTime=time;}
+ drawer?.update(time);wardrobeController?.update(time);petting?.update(time,dt);plush?.userData.updateLOD(camera);renderer.render(scene,camera);frames++;if(time-fpsTime>1000){$('fps').textContent=`${Math.round(frames*1000/(time-fpsTime))} fps`;frames=0;fpsTime=time;}
 }
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{goTo(b.dataset.view);focusScene();});
 $('orbit').onclick=()=>{setMode('orbit');focusScene();};$('fly').onclick=()=>{setMode('fly');focusScene();};$('reset').onclick=()=>{goTo('home');focusScene();};
