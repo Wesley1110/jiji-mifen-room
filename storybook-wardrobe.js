@@ -2,9 +2,10 @@ import * as THREE from 'three/webgpu';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {heartPath} from './storybook-desk.js?revision=nightstand-preview-1';
-import {makeHinokiMaterials,makeWovenMaterial} from './wardrobe-materials.js?revision=bunny-wardrobe-3';
-import {createPinkCarrotPlushes} from './wardrobe-plush.js?revision=bunny-wardrobe-3';
-import {createWardrobeController} from './wardrobe-interaction.js?revision=bunny-wardrobe-3';
+import {makeHinokiMaterials,makeWovenMaterial} from './wardrobe-materials.js?revision=bunny-wardrobe-5';
+import {createPinkCarrotPlushes} from './wardrobe-plush.js?revision=bunny-wardrobe-5';
+import {createWardrobeController} from './wardrobe-interaction.js?revision=bunny-wardrobe-5';
+import {createCarrotShelf,createDrawerCarrotHeap} from './wardrobe-carrot-storage.js?revision=bunny-wardrobe-5';
 
 // The viewer stands at the bed facing +Z: +X is the left side of the doorway.
 // Local +Z is the cabinet front. Keep this movable asset independent of the GLB.
@@ -72,7 +73,7 @@ export function createStorybookWardrobe(){
  }
  box(carcass,'internal bottom shelf',[2.70,.12,1.18],[0,.34,0],horizontal,.025);
  box(carcass,'solid toy compartment floor',[2.64,.12,1.12],[0,1.036,-.025],horizontal,.022);
- box(carcass,'lower drawer opening',[2.64,.55,.055],[0,.66,.55],recess,.018);
+ box(carcass,'recessed rear of real drawer cavity',[2.64,.55,.035],[0,.66,-.562],inner,.012);
  box(carcass,'drawer top rail',[2.73,.085,1.19],[0,.970,0],horizontal,.023);
  box(carcass,'upper framing rail',[2.78,.11,1.23],[0,4.075,0],horizontal,.025);
  box(carcass,'crown lower fillet',[2.99,.085,1.39],[0,4.165,0],edge,.027);
@@ -85,6 +86,14 @@ export function createStorybookWardrobe(){
  const cushion=box(carcass,'plump cotton cushion under the two toys',[2.46,.105,.99],[0,1.132,-.024],lining,.047);
  tube(carcass,'cushion piping',[[-1.16,1.133,.46],[1.16,1.133,.46],[1.20,1.133,.41],[1.20,1.133,-.45],[1.15,1.133,-.50],[-1.15,1.133,-.50],[-1.20,1.133,-.45],[-1.20,1.133,.41]],.009,piping,true);
  const toys=createPinkCarrotPlushes();root.add(toys);
+ // The new shelf sits above the existing pair, leaving the large cushions
+ // untouched. Its rounded solid nose and upholstered liner support four plump cushions.
+ box(carcass,'upper hinoki shelf',[2.61,.090,1.095],[0,3.047,-.035],horizontal,.021);
+ box(carcass,'rounded shelf front nosing',[2.64,.100,.065],[0,3.048,.507],pale,.024);
+ box(carcass,'upper shelf cotton liner',[2.45,.032,.98],[0,3.108,-.025],lining,.013);
+ tube(carcass,'upper shelf front piping',[[-1.19,3.119,.466],[0,3.119,.466],[1.19,3.119,.466]],.006,piping);
+ for(const side of [-1,1])for(const z of [-.36,.34])rod(carcass,'brass shelf support pin',[side*1.28,3.002,z],[side*1.22,3.002,z],.019,brass);
+ const shelfToys=createCarrotShelf();root.add(shelfToys);
  const pivots=[],pickTargets=[];
  const pickMaterial=new THREE.MeshBasicMaterial({visible:false});
 
@@ -114,10 +123,24 @@ export function createStorybookWardrobe(){
   }
  }
  const drawer=group(root,'wide lower drawer');
+ box(drawer,'solid sliding drawer bottom',[2.51,.060,1.10],[0,.455,.015],inner,.015);
+ box(drawer,'cotton liner inside drawer',[2.34,.022,.976],[0,.495,.012],lining,.010);
+ for(const side of [-1,1]){
+  box(drawer,'rounded drawer side',[.085,.382,1.11],[side*1.225,.679,.015],wood,.015);
+  box(carcass,'fixed recessed drawer runner',[.028,.046,1.0],[side*1.287,.580,-.035],brass,.008);
+  box(drawer,'sliding brass runner',[.024,.035,1.02],[side*1.273,.582,-.005],brass,.006);
+  // End grain joinery is visible when the drawer is pulled out.
+  for(const y of [.535,.633,.731,.829])box(drawer,'little inset dovetail end',[.089,.034,.055],[side*1.225,y,.569],edge,.006);
+ }
+ box(drawer,'drawer back board',[2.40,.362,.072],[0,.669,-.512],wood,.016);
  box(drawer,'separate drawer front',[2.631,.493,.117],[0,.671,.661],horizontal,.037);
  box(drawer,'slender inset drawer bevel',[2.479,.344,.023],[0,.671,.730],edge,.033);
  box(drawer,'soft raised drawer centre',[2.435,.300,.025],[0,.671,.749],horizontal,.030);
- for(const x of [-.70,.70])flowerPull(drawer,[x,.67,.788],.102);
+ for(const x of [-.70,.70]){
+  flowerPull(drawer,[x,.67,.788],.102);
+  const pick=mesh(drawer,'drawer flower handle hit area',new THREE.SphereGeometry(.145,12,8),pickMaterial);pick.position.set(x,.67,.867);pick.castShadow=pick.receiveShadow=false;pick.userData.sceneControlPick=true;pick.userData.wardrobeAction='drawer';pickTargets.push(pick);
+ }
+ const miniCarrots=createDrawerCarrotHeap();drawer.add(miniCarrots.root);
 
  // An integrated bunny-eared crown with a genuine heart-shaped opening.
  const crown=new THREE.Shape();crown.moveTo(-1.44,4.37);crown.lineTo(1.44,4.37);
@@ -187,12 +210,13 @@ export function createStorybookWardrobe(){
    const merged=mergeGeometries(geoms,false);if(merged){mesh(scope,'joined '+list[0].material.name,merged,list[0].material);for(const o of list){o.removeFromParent();o.geometry.dispose();}}geoms.forEach(g=>g.dispose());
   }
  }
- batch(root,new Set([...pivots,toys]));pivots.forEach(p=>batch(p));
+ batch(root,new Set([...pivots,toys,shelfToys,drawer]));pivots.forEach(p=>batch(p));
+ batch(drawer,new Set([miniCarrots.root]));
  toys.children.forEach(t=>batch(t));
- root.wardrobeController=createWardrobeController(root,pivots,pickTargets);
+ root.wardrobeController=createWardrobeController(root,pivots,pickTargets,{drawer,miniCarrots});
  root.position.fromArray(WARDROBE_PLACEMENT.position);root.rotation.y=WARDROBE_PLACEMENT.rotation;root.scale.setScalar(WARDROBE_PLACEMENT.scale);root.updateMatrixWorld(true);
  const bounds=new THREE.Box3().setFromObject(root);let count=0,triangles=0,invalid=0;
  root.traverse(o=>{if(o.isMesh){count++;triangles+=(o.geometry.index?.count||o.geometry.attributes.position.count)/3*(o.geometry.isInstancedBufferGeometry?o.geometry.instanceCount:1);for(const a of Object.values(o.geometry.attributes))for(const v of a.array)if(!Number.isFinite(v))invalid++;}});
- root.userData={revision:'bunny-wardrobe-3',placement:WARDROBE_PLACEMENT,meshCount:count,triangles,invalidCoordinates:invalid,worldBounds:{min:bounds.min.toArray(),max:bounds.max.toArray()},reference:'codex-clipboard-e90d6f6b-4bb8-46f9-8250-aeba72d32419.png',details:['irregular satin hinoki grain','rabbit ear crown','real heart opening','two hinged outward-opening doors','porcelain flower pulls on both sides','wide lower drawer','scalloped plinth','two tailored linen storage boxes','cotton-lined interior','two large pink carrot plush dolls'],interior:toys.userData,doorState:root.wardrobeController.state,preview:false};
+ root.userData={revision:'bunny-wardrobe-5',placement:WARDROBE_PLACEMENT,meshCount:count,triangles,invalidCoordinates:invalid,worldBounds:{min:bounds.min.toArray(),max:bounds.max.toArray()},reference:'codex-clipboard-e90d6f6b-4bb8-46f9-8250-aeba72d32419.png',details:['irregular satin hinoki grain','rabbit ear crown','real heart opening','two hinged outward-opening doors','porcelain flower pulls on both sides','lined pull-out drawer with dovetail sides','scalloped plinth','two tailored linen storage boxes','cotton-lined interior','two large pink carrot plush dolls','upper shelf with four oversized ceiling-compressed carrots','42 miniature carrots with overfilled rim'],interior:toys.userData,shelf:shelfToys.userData,drawer:miniCarrots.root.userData,doorState:root.wardrobeController.state,drawerState:root.wardrobeController.drawerState,preview:false};
  return root;
 }

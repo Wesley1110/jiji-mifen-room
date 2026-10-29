@@ -15,8 +15,8 @@ import {createStorybookNightstand} from './storybook-nightstand.js?revision=nigh
 import {bindDrawerInteraction} from './nightstand-drawer.js?revision=nightstand-v5';
 import {createHallwayGallery} from './hallway-gallery.js?revision=hallway-gallery-1';
 import {createStorybookDresser} from './storybook-dresser.js?revision=window-dresser-3';
-import {createStorybookWardrobe} from './storybook-wardrobe.js?revision=bunny-wardrobe-3';
-import {bindWardrobeInteraction} from './wardrobe-interaction.js?revision=bunny-wardrobe-3';
+import {createStorybookWardrobe} from './storybook-wardrobe.js?revision=bunny-wardrobe-5';
+import {bindWardrobeInteraction} from './wardrobe-interaction.js?revision=bunny-wardrobe-5';
 
 const $=id=>document.getElementById(id), viewport=$('room');
 const menu=initMenu();
@@ -129,7 +129,7 @@ async function init(){
  petting=createPetting({scene,root:gltf.scene,plush,camera,canvas:renderer.domElement,getMode:()=>mode,setMode,onInteract:interact,isSceneControl:e=>doorInteraction.hitTest(e)||drawerInteraction.hitTest(e)||wardrobeInteraction.hitTest(e)});
  setPressed('float',floating);await renderer.compileAsync(scene,camera);
  ready=true;fpsTime=performance.now();renderer.setAnimationLoop(animate);$('loading').hidden=true;
- window.__room={camera,orbit,renderer,scene,goTo,setMode,keys,door,drawer,navigation,petting,desk,nightstand,dresser,wardrobe,gallery,get status(){return {ready,revision:'bunny-wardrobe-3',furRevision:'plush-touch-1',petting:petting.status,bed:bed.userData,desk:desk.userData,nightstand:nightstand.userData,dresser:dresser.userData,wardrobe:wardrobe.userData,gallery:gallery.userData,slippers:slippers.userData,door:door.group.userData,navigation:{area:navigation.region(camera.position),hallwayAccess:true},menu:menu.state,backend:actualGPU?'WebGPU':'WebGL2',mode,meshCount,fiberCount,floating,position:camera.position.toArray(),wheelTravel,renderInfo:renderer.info.render};}};
+ window.__room={camera,orbit,renderer,scene,goTo,setMode,keys,door,drawer,navigation,petting,desk,nightstand,dresser,wardrobe,gallery,get status(){return {ready,revision:'bunny-wardrobe-5',furRevision:'plush-touch-1',petting:petting.status,bed:bed.userData,desk:desk.userData,nightstand:nightstand.userData,dresser:dresser.userData,wardrobe:wardrobe.userData,gallery:gallery.userData,slippers:slippers.userData,door:door.group.userData,navigation:{area:navigation.region(camera.position),hallwayAccess:true},menu:menu.state,backend:actualGPU?'WebGPU':'WebGL2',mode,meshCount,fiberCount,floating,position:camera.position.toArray(),wheelTravel,renderInfo:renderer.info.render};}};
  const rawView=new URLSearchParams(location.search).get('view'),requestedView=rawView==='characters'?'gallery':rawView;if(Object.hasOwn(poses,requestedView))goTo(requestedView,true);
  window.dispatchEvent(new Event('room-ready'));
 }
