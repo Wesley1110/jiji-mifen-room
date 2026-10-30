@@ -1,6 +1,6 @@
 import * as THREE from 'three/webgpu';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
-import {createHallway} from './hallway.js?revision=room-details-4';
+import {createGardenHouse as createHallway} from './garden-house.js?revision=pink-carrot-garden-1';
 
 function hinokiGrain(){
  const c=document.createElement('canvas');c.width=c.height=768;const x=c.getContext('2d');x.fillStyle='#d9b98a';x.fillRect(0,0,768,768);
@@ -13,7 +13,7 @@ function hinokiGrain(){
 function arch(w,spring,bottom=0){
  const r=w/2,s=new THREE.Shape();s.moveTo(-r,bottom);s.lineTo(r,bottom);s.lineTo(r,spring);s.absarc(0,spring,r,0,Math.PI,false);s.lineTo(-r,bottom);s.closePath();return s;
 }
-export function createFairytaleDoor(root,{canClose=()=>true}={}){
+export function createFairytaleDoor(root,{canClose=()=>true,canCloseEntry=()=>true}={}){
  const group=new THREE.Group();group.name='Fairytale hinoki doorway';group.position.set(-3.55,0,10.08);
  const grain=hinokiGrain(),wood=new THREE.MeshPhysicalMaterial({name:'Door | pale hinoki',map:grain,roughness:.70,specularIntensity:.21});
  const light=wood.clone();light.color.set('#fff3dc');const edge=wood.clone();edge.color.set('#bd955f');
@@ -74,7 +74,7 @@ export function createFairytaleDoor(root,{canClose=()=>true}={}){
   const button=mesh(handle,'maple knob centre',new THREE.SphereGeometry(.029,20,16),inlay);button.scale.z=.24;button.position.set(0,0,side*.223);
   const proxy=mesh(handle,'generous handle click target',new THREE.SphereGeometry(.205,16,12),new THREE.MeshBasicMaterial({visible:false}));proxy.position.z=side*.135;proxy.userData.doorPick=true;proxy.castShadow=false;pickTargets.push(proxy);
  }
- const entry=createHallway(wood);group.add(entry);
+ const entry=createHallway(wood,{canCloseEntry});group.add(entry);
  let target=0,start=0,from=0,angle=0;
  const maximum=Math.PI*.49,duration=1050;
  function toggle(time=performance.now()){if(target>0&&!canClose())return false;from=angle;target=target?0:maximum;start=time;group.userData.open=target>0;group.userData.moving=Math.abs(angle-target)>.0001;return true;}
@@ -85,7 +85,7 @@ export function createFairytaleDoor(root,{canClose=()=>true}={}){
  let meshCount=0;group.traverse(o=>{if(o.isMesh&&!o.userData.doorPick)meshCount++;});
  group.userData={revision:'hinoki-door-3',meshCount,replacedMeshes:replaced,open:false,angle:0,moving:false,maximumAngle:maximum,hinge:'left',swing:'inward',hallway:entry.userData};
  update(0);
- return {group,pivot,pickTargets,knobs,toggle,update};
+ return {group,pivot,pickTargets,knobs,toggle,update,house:entry.houseController};
 }
 
 export function bindDoorInteraction({door,scene,camera,canvas,onInteract}){

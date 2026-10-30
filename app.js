@@ -7,8 +7,9 @@ import {upgradeFairytaleBed} from './bed.js?revision=storybook-bed-2';
 import {placeBedOccupants} from './bedding.js?revision=bedding-2';
 import {initMenu} from './menu.js?revision=room-details-1';
 import {createBedsideSlippers} from './house-slippers.js?revision=room-details-4';
-import {createFairytaleDoor,bindDoorInteraction} from './door.js?revision=nightstand-v5';
-import {createNavigation} from './navigation.js?revision=room-details-4';
+import {createFairytaleDoor,bindDoorInteraction} from './door.js?revision=pink-carrot-garden-1';
+import {createNavigation} from './navigation.js?revision=pink-carrot-garden-1';
+import {bindHouseInteraction} from './home-entrance.js?revision=garden-house-1';
 import {createPetting} from './petting.js?revision=plump-paw-4';
 import {createStorybookDesk} from './storybook-desk.js?revision=nightstand-preview-1';
 import {createStorybookNightstand} from './storybook-nightstand.js?revision=nightstand-v5';
@@ -23,7 +24,7 @@ const menu=initMenu();
 const camera=new THREE.PerspectiveCamera(innerWidth<innerHeight?82:54,innerWidth/innerHeight,.05,200);
 const scene=new THREE.Scene();scene.background=new THREE.Color('#efe2d1');
 let renderer,orbit,plush,door,drawer,wardrobeController,petting,mode='orbit',floating=!matchMedia('(prefers-reduced-motion: reduce)').matches;
-const navigation=createNavigation(()=>door?.group.userData.angle||0);
+const navigation=createNavigation(()=>door?.group.userData.angle||0,()=>door?.house.entry.angle||0);
 let lastInteraction=0,transition=null,drag=null,lastTime=0,frames=0,fpsTime=0,ready=false;
 let wheelTravel=0;
 const keys=new Set(), offset=new THREE.Vector3(),worldUp=new THREE.Vector3(0,1,0),temp=new THREE.Vector3();
@@ -40,6 +41,10 @@ const walls=[];const poses={
  drawer:{pos:[-4.02,2.55,-.18],target:[-3.925,1.28,-.81]},
  door:{pos:[-2.5,2.35,5.7],target:[-3.55,1.65,10.2]},
  gallery:{pos:[-6.8,2.55,14.89],target:[2.044,2.27,14.89]},
+ reading:{pos:[-8.75,2.58,16.87],target:[-14.40,1.30,15.80]},
+ entry:{pos:[-5.10,2.50,15.15],target:[-7.15,1.75,19.48]},
+ porch:{pos:[-6.60,2.45,25.70],target:[-7.15,1.90,19.53]},
+ garden:{pos:[1.55,4.16,27.80],target:[-7.35,.68,24.75]},
  window:{pos:[.3,4.1,5.6],target:[5.5,3.4,.6]},
  plan:{pos:[-2.6,19.5,3.51],target:[-2.6,0,3.5]}
 };
@@ -115,7 +120,7 @@ async function init(){
  $('loadText').textContent='梳理柔軟的細短絨毛';plush=await loadFineFur(gltf.scene);scene.add(plush);const fiberCount=plush.userData.fiberCount;$('progress').style.width='100%';
  placeBedOccupants(gltf.scene,plush);
  const slippers=createBedsideSlippers(cloth);scene.add(slippers);meshCount+=slippers.userData.meshCount;
- door=createFairytaleDoor(gltf.scene,{canClose:()=>navigation.canClose(camera.position)});scene.add(door.group);meshCount+=door.group.userData.meshCount-door.group.userData.replacedMeshes;
+ door=createFairytaleDoor(gltf.scene,{canClose:()=>navigation.canClose(camera.position),canCloseEntry:()=>navigation.canCloseEntry(camera.position)});scene.add(door.group);meshCount+=door.group.userData.meshCount-door.group.userData.replacedMeshes;
  const desk=createStorybookDesk();scene.add(desk);meshCount+=desk.userData.meshCount;
  const nightstand=await createStorybookNightstand();scene.add(nightstand);meshCount+=nightstand.userData.meshCount;
  const dresser=createStorybookDresser();scene.add(dresser);meshCount+=dresser.userData.meshCount;
@@ -126,10 +131,11 @@ async function init(){
  const doorInteraction=bindDoorInteraction({door,scene,camera,canvas:renderer.domElement,onInteract:interact});
  const drawerInteraction=bindDrawerInteraction({drawer,scene,camera,canvas:renderer.domElement,onInteract:interact});
  const wardrobeInteraction=bindWardrobeInteraction({wardrobe:wardrobeController,scene,camera,canvas:renderer.domElement,onInteract:interact});
- petting=createPetting({scene,root:gltf.scene,plush,camera,canvas:renderer.domElement,getMode:()=>mode,setMode,onInteract:interact,isSceneControl:e=>doorInteraction.hitTest(e)||drawerInteraction.hitTest(e)||wardrobeInteraction.hitTest(e)});
+ const houseInteraction=bindHouseInteraction({house:door.house,scene,camera,canvas:renderer.domElement,onInteract:interact});
+ petting=createPetting({scene,root:gltf.scene,plush,camera,canvas:renderer.domElement,getMode:()=>mode,setMode,onInteract:interact,isSceneControl:e=>doorInteraction.hitTest(e)||drawerInteraction.hitTest(e)||wardrobeInteraction.hitTest(e)||houseInteraction.hitTest(e)});
  setPressed('float',floating);await renderer.compileAsync(scene,camera);
  ready=true;fpsTime=performance.now();renderer.setAnimationLoop(animate);$('loading').hidden=true;
- window.__room={camera,orbit,renderer,scene,goTo,setMode,keys,door,drawer,navigation,petting,desk,nightstand,dresser,wardrobe,gallery,get status(){return {ready,revision:'bunny-wardrobe-5',furRevision:'plush-touch-1',petting:petting.status,bed:bed.userData,desk:desk.userData,nightstand:nightstand.userData,dresser:dresser.userData,wardrobe:wardrobe.userData,gallery:gallery.userData,slippers:slippers.userData,door:door.group.userData,navigation:{area:navigation.region(camera.position),hallwayAccess:true},menu:menu.state,backend:actualGPU?'WebGPU':'WebGL2',mode,meshCount,fiberCount,floating,position:camera.position.toArray(),wheelTravel,renderInfo:renderer.info.render};}};
+ window.__room={camera,orbit,renderer,scene,goTo,setMode,keys,door,house:door.house,drawer,navigation,petting,desk,nightstand,dresser,wardrobe,gallery,get status(){return {ready,revision:'pink-carrot-garden-1',furRevision:'plush-touch-1',petting:petting.status,bed:bed.userData,desk:desk.userData,nightstand:nightstand.userData,dresser:dresser.userData,wardrobe:wardrobe.userData,gallery:gallery.userData,slippers:slippers.userData,door:door.group.userData,navigation:{area:navigation.region(camera.position),hallwayAccess:true},menu:menu.state,backend:actualGPU?'WebGPU':'WebGL2',mode,meshCount,fiberCount,floating,position:camera.position.toArray(),wheelTravel,renderInfo:renderer.info.render};}};
  const rawView=new URLSearchParams(location.search).get('view'),requestedView=rawView==='characters'?'gallery':rawView;if(Object.hasOwn(poses,requestedView))goTo(requestedView,true);
  window.dispatchEvent(new Event('room-ready'));
 }
@@ -151,7 +157,7 @@ function animate(time){
  const interiorView=mode==='fly'||navigation.inHallway(camera.position);
  for(const w of walls){w.mesh.visible=interiorView||!(w.name.startsWith('Wall 01')&&camera.position.z< -3.2 || w.name.startsWith('Wall 02')&&camera.position.x< -10.65 || w.name.startsWith('Wall 03')&&camera.position.z>10.15 || w.name.startsWith('Wall 04')&&camera.position.x>5.45);}
  if(door){door.group.visible=interiorView||camera.position.z<=10.15;door.update(time,camera.position);}
- drawer?.update(time);wardrobeController?.update(time);petting?.update(time,dt);plush?.userData.updateLOD(camera);renderer.render(scene,camera);frames++;if(time-fpsTime>1000){$('fps').textContent=`${Math.round(frames*1000/(time-fpsTime))} fps`;frames=0;fpsTime=time;}
+ door?.house.update(time,camera);drawer?.update(time);wardrobeController?.update(time);petting?.update(time,dt);plush?.userData.updateLOD(camera);renderer.render(scene,camera);frames++;if(time-fpsTime>1000){$('fps').textContent=`${Math.round(frames*1000/(time-fpsTime))} fps`;frames=0;fpsTime=time;}
 }
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{goTo(b.dataset.view);focusScene();});
 $('orbit').onclick=()=>{setMode('orbit');focusScene();};$('fly').onclick=()=>{setMode('fly');focusScene();};$('reset').onclick=()=>{goTo('home');focusScene();};

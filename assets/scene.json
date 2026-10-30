@@ -13,7 +13,7 @@
   },
   "conversion": "Original meshes and placement; native-root curved plush pile with shape-aware feature grooming, gentle root shading and stable strand shadow sampling. Always-on fur, WASD and wheel flight, bed blanket preset, translucent menus.",
   "material_revision": "plush-4",
-  "scene_revision": "room-details-4",
+  "scene_revision": "pink-carrot-garden-1",
   "bed_overlay": "Procedural hinoki-style cloud bed with thick milk-tea mattress, separate pillow top, filled oat and rose pillows, and a volumetric dusty-rose duvet with woven normals, sewn channels and a turned-back oat fold. Toys and matching fur translate together. Original GLB and native fiber data are preserved.",
   "fiber_count": 787615,
   "fiber_groups": 32,
@@ -23,11 +23,18 @@
     "revision": "slippers-4",
     "pairs": 2,
     "shoes": 4,
-    "colors": ["oatmeal", "dusty rose"],
+    "colors": [
+      "oatmeal",
+      "dusty rose"
+    ],
     "placement": "floor left of bed beside teddy rug",
     "design": "plain closed-toe, open-heel indoor slippers with padded footbeds and thin binding",
     "character_features": false,
-    "bows": {"count": 2, "color": "rose pink", "pair": "dusty rose"},
+    "bows": {
+      "count": 2,
+      "color": "rose pink",
+      "pair": "dusty rose"
+    },
     "additional_fibers": 0
   },
   "door": {
@@ -38,18 +45,25 @@
     "duration_ms": 1050,
     "entry_recess": false,
     "hallway": {
-      "revision": "daylight-hallway-2",
+      "revision": "pink-carrot-garden-1",
       "depth": 9.1,
       "width": 11.2,
       "side_passage": true,
       "garden_window": true,
-      "camera_access": "WASD, flight wheel and touch directions can enter through the open door and return",
+      "camera_access": "Bedroom, expanded reading room, entry, open front door, porch and garden paths connect through WASD, flight wheel and touch directions",
       "walkable": true
     }
   },
   "navigation": {
-    "revision": "connected-hallway-1",
-    "areas": ["bedroom", "doorway", "hallway", "side passage"],
+    "revision": "garden-house-1",
+    "areas": [
+      "bedroom",
+      "bedroom doorway",
+      "hallway",
+      "reading room",
+      "home entrance",
+      "garden"
+    ],
     "door_collision": true,
     "wall_and_window_boundaries": true,
     "door_close_clearance_guard": true
@@ -63,5 +77,23 @@
     "restore": "Visible restore button or M key",
     "storage": "localStorage when available",
     "shift_hint": "Visible in full and compact menus and help"
+  },
+  "garden_house": {
+    "revision": "pink-carrot-garden-1",
+    "approved": true,
+    "reading_wing": true,
+    "interactive_front_door": true,
+    "porch": true,
+    "carrot_beds": 4,
+    "planted_pink_carrots": 24,
+    "harvested_carrots": 3,
+    "carrot_source": "approved faceless wardrobe plush pattern with curved short-pile fibres",
+    "walking_aisles": "central and cross aisle",
+    "presets": [
+      "reading",
+      "entry",
+      "porch",
+      "garden"
+    ]
   }
 }
