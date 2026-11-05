@@ -1,7 +1,7 @@
 import * as THREE from 'three/webgpu';
 import {housePalette,craft,archShape,archSurround,contactShadow} from './house-craft.js';
 import {createHomeEntrance} from './home-entrance.js';
-import {createReadingRoom} from './reading-room.js';
+import {createReadingRoom} from './reading-room.js?revision=carrot-lounge-1';
 import {createPinkCarrotGarden} from './carrot-garden.js?revision=pink-carrot-garden-1';
 
 // Local origin is the bedroom doorway. The visitor's RIGHT is negative X.
@@ -148,7 +148,7 @@ export function createGardenHouse(_bedroomWood,{canCloseEntry=()=>true}={}){
  const sky=new THREE.MeshBasicMaterial({map:skyMap,side:THREE.DoubleSide});box(root,'far garden backdrop',[55,20,.10],[-2,7,27.0],sky).castShadow=false;box(root,'side garden backdrop',[.10,20,40],[-25,7,10],sky).castShadow=false;
  const sunGarden=new THREE.SpotLight('#fff3dc',48,20,1.12,.70,2);sunGarden.position.set(-7,7.4,12.4);sunGarden.target.position.set(-3.6,0,14.6);sunGarden.castShadow=true;sunGarden.shadow.mapSize.set(1024,1024);sunGarden.shadow.bias=-.00025;sunGarden.shadow.normalBias=.018;sunGarden.shadow.radius=3;root.add(sunGarden,sunGarden.target);
  const carrots=createPinkCarrotGarden(m);root.add(carrots.root);
- root.userData={revision:'pink-carrot-garden-1',hallway:true,readingWing:{x:[-13.05,-5.68],z:[3.42,8.30]},entry:true,porch:true,garden:true,carrots:carrots.root.userData,preview:false};
+ root.userData={revision:'carrot-lounge-1',reading:reading.root.userData,hallway:true,readingWing:{x:[-13.05,-5.68],z:[3.42,8.30]},entry:true,porch:true,garden:true,carrots:carrots.root.userData,preview:false};
  root.houseController={root,entry,reading,carrots,pickTargets:[...entry.pickTargets,...reading.pickTargets],update:(time,camera)=>{entry.update(time);carrots.update(time,camera);}};
  return root;
 }

@@ -1,5 +1,7 @@
 import * as THREE from 'three/webgpu';
-import {craft,roundedShape,archShape,roundLoop,pillowGeometry,contactShadow} from './house-craft.js';
+import {craft,roundLoop,pillowGeometry,contactShadow} from './house-craft.js';
+import {createSofaCarrots,createCarrotPicture} from './reading-carrots.js?revision=carrot-lounge-1';
+import {createCarrotJuiceService} from './carrot-juice.js?revision=carrot-lounge-1';
 
 export function createReadingRoom(m){
  const root=new THREE.Group();root.name='Garden reading living room';
@@ -25,24 +27,17 @@ export function createReadingRoom(m){
   const seam=tube(bench,'seat welt seam',roundLoop(1.36,1.12,.20,.91),.011,m.linen,true);seam.position.x=x;
   const back=mesh(bench,'soft lumbar back cushion',pillowGeometry(1.39,.70,.32),m.cream);back.position.set(x,1.34,-.40);back.rotation.x=-.13;
  }
- for(const [x,y,z,color,rz] of [[-1.02,1.35,.04,m.sage,-.15],[1.0,1.34,.04,m.rose,.13]]){
-  const g=group('loose feather pillow',[x,y,z],0,bench);g.rotation.z=rz;g.rotation.x=-.19;
-  mesh(g,'soft square woven pillow',pillowGeometry(.64,.64,.24),color);
-  const pts=roundedShape(.58,.58,.11).getPoints(64).map(v=>[v.x,v.y,.078]);tube(g,'pillow corded edge',pts,.008,m.linen,true);
-  // Tiny embroidery reads as stitching, without covering the cotton in print.
-  for(let k=0;k<5;k++){const a=k*Math.PI*2/5;oval(g,'embroidered daisy petal',[Math.cos(a)*.055,Math.sin(a)*.055,.123],[.04,.022,.003],m.linen).rotation.z=a;}
-  oval(g,'embroidered centre',[0,0,.126],[.022,.022,.003],m.gold);
- }
+ const carrotCushions=createSofaCarrots(bench);
  // A continuous draped blanket: over the back cushion, across the seat, then
  // gravity pulls the edge down the front. Folds share one cloth surface.
  const cloth=new THREE.PlaneGeometry(.84,1.98,28,60),cp=cloth.attributes.position;
  const profileCurve=new THREE.CatmullRomCurve3([[0,1.72,-.46],[0,1.60,-.19],[0,1.22,-.13],[0,1.105,.05],[0,1.105,.43],[0,1.02,.64],[0,.78,.72],[0,.28,.76]].map(p=>new THREE.Vector3(...p)),false,'centripetal');
  for(let i=0;i<cp.count;i++){
   const u=cp.getX(i),t=THREE.MathUtils.clamp((cp.getY(i)+.99)/1.98,0,1),p=profileCurve.getPoint(t),fold=Math.sin(u*29+t*3)*.019+Math.sin(u*53-t*3)*.006;
-  cp.setXYZ(i,u+.15,p.y+fold,p.z+Math.sin(u*20)*.013);
+  cp.setXYZ(i,u,p.y+fold,p.z+Math.sin(u*20)*.013);
  }
  cloth.computeVertexNormals();const throwMat=m.rose.clone();throwMat.side=THREE.DoubleSide;mesh(bench,'naturally draped rose throw',cloth,throwMat);
- for(let i=0;i<23;i++){const x=-.27+i*.037;tube(bench,'throw knotted fringe',[[x,.31,.75],[x+.007,.25,.76],[x+.012,.19+Math.sin(i)*.015,.775]],.004,m.rose);}
+ for(let i=0;i<23;i++){const x=-.42+i*.037;tube(bench,'throw knotted fringe',[[x,.31,.75],[x+.007,.25,.76],[x+.012,.19+Math.sin(i)*.015,.775]],.004,m.rose);}
  contactShadow(root,-11.98,5.8,1.10,1.9,.38,.060);
 
  // Thick wool rug, with a rounded bound perimeter and sparse stitched sprigs.
@@ -63,14 +58,7 @@ export function createReadingRoom(m){
  const edge=panel(table,'rounded oval tabletop',topShape,[0,.65,0],.10,m.horizontal,.035);edge.rotation.x=Math.PI/2;
  const inner=new THREE.Shape();inner.absellipse(0,0,.90,.55,0,Math.PI*2,false);const face=panel(table,'subtle inset top field',inner,[0,.686,0],.006,m.horizontal,.008);face.rotation.x=Math.PI/2;
  contactShadow(root,-9.65,5.8,.94,1.25,.42,.061);
- // Tiny ceramic service, with hollow cup rims, tea and individual handles.
- function cup(parent,x,z){
-  lathe(parent,'hand thrown tea cup',[[.035,0],[.085,.015],[.098,.11],[.094,.15],[.080,.15],[.078,.12],[.066,.032],[.035,.025]],[x,.708,z],m.ceramic);
-  lathe(parent,'ceramic saucer',[[0,0],[.10,0],[.14,.012],[.145,.022],[.11,.024],[0,.012]],[x,.688,z],m.ceramic);
-  const tea=new THREE.MeshStandardMaterial({color:'#805335',roughness:.26});const liquid=mesh(parent,'warm tea',new THREE.CircleGeometry(.078,32),tea);liquid.rotation.x=-Math.PI/2;liquid.position.set(x,.828,z);
-  const pts=[];for(let i=0;i<=24;i++){const a=-Math.PI/2+i*Math.PI/24;pts.push([x+.087+Math.cos(a)*.065,.785+Math.sin(a)*.055,z]);}tube(parent,'ceramic cup handle',pts,.013,m.ceramic);
- }
- cup(table,-.48,.10);cup(table,.41,-.20);
+ const juiceService=createCarrotJuiceService(table,m);
  const book=group('open linen bound book',[.15,.70,.16],-.24,table);
  box(book,'book cover',[.55,.026,.39],[0,0,0],m.sage,.012);
  for(const sign of [-1,1]){
@@ -105,10 +93,9 @@ export function createReadingRoom(m){
  for(let x=-.33;x<.36;x+=.075)tube(basket,'upright wicker strap',[[x,.04,.186],[x+.008,.19,.198],[x,.40,.186]],.012,m.pale);
  box(basket,'folded cotton basket rim',[.82,.065,.39],[0,.41,0],m.cream,.025);
  tube(basket,'leather loop handle',[[-.10,.30,.206],[-.09,.20,.235],[.09,.20,.235],[.10,.30,.206]],.014,m.edge);
- const frame=group('small botanical picture',[.49,.91,.19],0,shelf);
+ const frame=group('small pink carrot picture',[.49,.91,.19],0,shelf);
  box(frame,'framed linen art',[.63,.48,.045],[0,.24,0],m.horizontal,.026);box(frame,'linen mat',[.54,.39,.009],[0,.24,.029],m.linen,.01);
- tube(frame,'embroidered botanical stem',[[0,.08,.037],[.012,.22,.037],[-.025,.38,.037]],.006,m.green);
- for(const [x,y,r] of [[-.05,.17,-.7],[.06,.24,.6],[-.05,.30,-.7]]){const leaf=oval(frame,'botanical fabric leaf',[x,y,.04],[.055,.024,.004],m.sage);leaf.rotation.z=r;}
+ createCarrotPicture(frame,carrotCushions.portrait);
  contactShadow(root,-8.18,3.77,1.35,.58,.32);
 
  const vase=group('daisy bud vase',[-8.88,1.65,3.77]);
@@ -134,6 +121,6 @@ export function createReadingRoom(m){
  const pull=oval(lamp,'wooden pull toggle',[.19,1.56,0],[.034,.065,.034],m.pale);
  const proxy=mesh(lamp,'lamp switch target',new THREE.SphereGeometry(.18,16,12),new THREE.MeshBasicMaterial({visible:false}));proxy.position.copy(pull.position);proxy.userData.sceneControlPick=true;proxy.userData.houseAction='lamp';proxy.castShadow=false;
  let lit=true;const toggleLamp=()=>{lit=!lit;light.intensity=lit?5:0;shadeMat.emissiveIntensity=lit?.23:0;bulbMat.emissiveIntensity=lit?1.2:0;};
- root.userData={revision:'reading-room-1',style:'hinoki and woven linen',bench:true,teaTable:true,bookcase:true};
+ root.userData={revision:'carrot-lounge-1',style:'hinoki and woven linen',bench:true,teaTable:true,bookcase:true,carrotCushions:carrotCushions.root.userData,juice:juiceService.userData,framedArt:'matching pink carrot embroidery'};
  return {root,pickTargets:[proxy],toggleLamp,get lampOn(){return lit;}};
 }

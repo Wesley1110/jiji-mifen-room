@@ -7,7 +7,7 @@ import {upgradeFairytaleBed} from './bed.js?revision=storybook-bed-2';
 import {placeBedOccupants} from './bedding.js?revision=bedding-2';
 import {initMenu} from './menu.js?revision=room-details-1';
 import {createBedsideSlippers} from './house-slippers.js?revision=room-details-4';
-import {createFairytaleDoor,bindDoorInteraction} from './door.js?revision=pink-carrot-garden-1';
+import {createFairytaleDoor,bindDoorInteraction} from './door.js?revision=carrot-lounge-1';
 import {createNavigation} from './navigation.js?revision=pink-carrot-garden-1';
 import {bindHouseInteraction} from './home-entrance.js?revision=garden-house-1';
 import {createPetting} from './petting.js?revision=plump-paw-4';
@@ -54,6 +54,9 @@ function clearFloat(){camera.position.sub(offset);offset.set(0,0,0);}
 function goTo(name,instant=false){
  if(!orbit)return;clearFloat();setMode('orbit');let p=name==='home'&&innerWidth<innerHeight?{pos:[-2.6,10,16.8],target:[-2.6,1.22,1.5]}:poses[name];
  if(name==='gallery'){const distance=THREE.MathUtils.clamp(10.15/(2*Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*camera.aspect),4.8,10.5);p={pos:[2.044-distance,2.55,14.89],target:[2.044,2.27,14.89]};}
+ if(name==='reading'&&camera.aspect<1.5){
+  const target=p.target.map((v,i)=>v-(i===2?.95:0));p={target,pos:p.pos.map((v,i)=>target[i]+(v-p.target[i])*1.10)};
+ }
  // Consume residual drag momentum without moving the start pose of a preset.
  // Otherwise a quick view selected immediately after dragging keeps drifting.
  const damping=orbit.enableDamping,priorPosition=camera.position.clone(),priorTarget=orbit.target.clone();
@@ -135,7 +138,7 @@ async function init(){
  petting=createPetting({scene,root:gltf.scene,plush,camera,canvas:renderer.domElement,getMode:()=>mode,setMode,onInteract:interact,isSceneControl:e=>doorInteraction.hitTest(e)||drawerInteraction.hitTest(e)||wardrobeInteraction.hitTest(e)||houseInteraction.hitTest(e)});
  setPressed('float',floating);await renderer.compileAsync(scene,camera);
  ready=true;fpsTime=performance.now();renderer.setAnimationLoop(animate);$('loading').hidden=true;
- window.__room={camera,orbit,renderer,scene,goTo,setMode,keys,door,house:door.house,drawer,navigation,petting,desk,nightstand,dresser,wardrobe,gallery,get status(){return {ready,revision:'pink-carrot-garden-1',furRevision:'plush-touch-1',petting:petting.status,bed:bed.userData,desk:desk.userData,nightstand:nightstand.userData,dresser:dresser.userData,wardrobe:wardrobe.userData,gallery:gallery.userData,slippers:slippers.userData,door:door.group.userData,navigation:{area:navigation.region(camera.position),hallwayAccess:true},menu:menu.state,backend:actualGPU?'WebGPU':'WebGL2',mode,meshCount,fiberCount,floating,position:camera.position.toArray(),wheelTravel,renderInfo:renderer.info.render};}};
+ window.__room={camera,orbit,renderer,scene,goTo,setMode,keys,door,house:door.house,drawer,navigation,petting,desk,nightstand,dresser,wardrobe,gallery,get status(){return {ready,revision:'carrot-lounge-1',furRevision:'plush-touch-1',petting:petting.status,bed:bed.userData,desk:desk.userData,nightstand:nightstand.userData,dresser:dresser.userData,wardrobe:wardrobe.userData,gallery:gallery.userData,slippers:slippers.userData,door:door.group.userData,navigation:{area:navigation.region(camera.position),hallwayAccess:true},menu:menu.state,backend:actualGPU?'WebGPU':'WebGL2',mode,meshCount,fiberCount,floating,position:camera.position.toArray(),wheelTravel,renderInfo:renderer.info.render};}};
  const rawView=new URLSearchParams(location.search).get('view'),requestedView=rawView==='characters'?'gallery':rawView;if(Object.hasOwn(poses,requestedView))goTo(requestedView,true);
  window.dispatchEvent(new Event('room-ready'));
 }

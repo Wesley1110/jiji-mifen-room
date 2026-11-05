@@ -1,6 +1,6 @@
 import * as THREE from 'three/webgpu';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
-import {createGardenHouse as createHallway} from './garden-house.js?revision=pink-carrot-garden-1';
+import {createGardenHouse as createHallway} from './garden-house.js?revision=carrot-lounge-1';
 
 function hinokiGrain(){
  const c=document.createElement('canvas');c.width=c.height=768;const x=c.getContext('2d');x.fillStyle='#d9b98a';x.fillRect(0,0,768,768);
