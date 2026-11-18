@@ -1,5 +1,8 @@
 import * as THREE from 'three/webgpu';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
+import {createCampbellHardcover} from './campbell-hardcover.js';
+import {createFountainPen} from './fountain-pen.js';
+import {createDrawerController} from './nightstand-drawer.js?revision=desk-study-1';
 
 // Furniture is an independent, movable asset. All cutouts and upholstery have
 // actual depth; the reference illustration is not used as a billboard.
@@ -25,11 +28,6 @@ function heartPath(cx, cy, size, Path = THREE.Shape) {
   s.bezierCurveTo(cx + w * .12, cy + h * .57, cx + w * .41, cy + h * .55, cx + w * .48, cy + h * .27);
   s.bezierCurveTo(cx + w * .55, cy + h * .01, cx + w * .12, cy - h * .30, cx, cy - h * .48); s.closePath(); return s;
 }
-function drawHeart(c, x, y, r, color) {
-  c.fillStyle = color; c.beginPath(); c.moveTo(x, y + r);
-  c.bezierCurveTo(x-r*1.6,y-r*.1,x-r*.7,y-r*1.4,x,y-r*.5);
-  c.bezierCurveTo(x+r*.7,y-r*1.4,x+r*1.6,y-r*.1,x,y+r); c.fill();
-}
 function drawFlower(c, x, y, r, petals = '#f4b6ae') {
   c.fillStyle = petals;
   for (let i=0;i<5;i++) { const a=i*Math.PI*2/5; c.beginPath();c.ellipse(x+Math.cos(a)*r*.62,y+Math.sin(a)*r*.62,r*.46,r*.46,0,0,Math.PI*2);c.fill(); }
@@ -52,15 +50,6 @@ function ginghamTexture() {
     c.fillStyle='#d987827d';const a=s/8;
     for(let i=0;i<8;i+=2){c.fillRect(i*a,0,a,s);c.fillRect(0,i*a,s,a);}
     for(let i=0;i<s;i+=4){c.fillStyle=i%8?'#fff5ed19':'#c1847f10';c.fillRect(i,0,1,s);c.fillRect(0,i,s,1);}
-  });
-}
-function paperTexture() {
-  return texture((c,s)=>{
-    c.fillStyle='#f1e0c2';c.fillRect(0,0,s,s);c.strokeStyle='#bdae969e';c.lineWidth=3;
-    for(let y=155;y<900;y+=83){c.beginPath();c.moveTo(90,y);c.lineTo(930,y);c.stroke();}
-    drawHeart(c,160,855,28,'#e6a499');drawFlower(c,800,210,40);c.strokeStyle='#8fa17a';c.lineWidth=6;
-    c.beginPath();c.moveTo(800,240);c.bezierCurveTo(810,280,800,300,785,325);c.stroke();
-    c.fillStyle='#9cac85';c.beginPath();c.ellipse(785,283,27,12,.6,0,Math.PI*2);c.fill();
   });
 }
 
@@ -126,11 +115,28 @@ export function createStorybookDesk() {
     box(desk,'low side stretcher',[.16,.17,1.16],[x,.35,0],wood,.035);
   }
   box(desk,'low rear stretcher',[2.96,.17,.16],[0,.35,-.58],wood,.035);
-  box(desk,'drawer housing',[2.92,.46,1.17],[0,1.94,-.04],wood,.04);
-  box(desk,'drawer recessed shadow',[2.35,.42,.025],[0,1.93,.562],edge,.05);
-  box(desk,'single rounded drawer front',[2.25,.37,.09],[0,1.94,.60],pale,.055);
-  rod(desk,'drawer knob stem',[0,1.94,.66],[0,1.94,.74],.043,wood);
-  oval(desk,'round wooden drawer pull',[0,1.94,.764],[.092,.092,.067],wood);
+  // The apron frames a real cavity, with a runner under each side of the tray.
+  for (const side of [-1, 1]) {
+    box(desk,'apron cheek',[.31,.46,1.17],[side*1.305,1.94,-.04],wood,.026);
+    box(desk,'drawer runner',[.08,.035,1.10],[side*1.045,1.755,-.04],edge,.008);
+  }
+  box(desk,'lower apron rail',[2.31,.044,1.17],[0,1.731,-.04],wood,.012);
+  box(desk,'rear apron',[2.30,.40,.044],[0,1.95,-.602],wood,.012);
+  const tray = new THREE.Group();
+  tray.name = 'Writing desk drawer';
+  desk.add(tray);
+  box(tray,'drawer bottom',[2.18,.034,1.04],[0,1.792,.035],pale,.008);
+  for (const side of [-1, 1]) {
+    box(tray,'drawer side',[.047,.248,1.04],[side*1.068,1.918,.035],wood,.012);
+  }
+  box(tray,'drawer back',[2.10,.248,.045],[0,1.918,-.461],wood,.010);
+  box(tray,'single rounded drawer front',[2.25,.355,.09],[0,1.929,.60],pale,.039);
+  rod(tray,'drawer knob stem',[0,1.94,.641],[0,1.94,.746],.043,wood);
+  const pull = oval(tray,'round wooden drawer pull',[0,1.94,.764],[.092,.092,.067],wood.clone());
+  const pick = oval(tray,'round pull hit area',[0,1.94,.764],[.12,.12,.091],new THREE.MeshBasicMaterial({visible:false}));
+  pick.castShadow = pick.receiveShadow = false;
+  pick.userData.sceneControlPick = true;
+  group.drawerController = createDrawerController(tray,[pick],pull,{travel:.80,contents:'',handleLabel:'圓把手'});
   const cloud=new THREE.Shape();cloud.moveTo(-1.61,2.34);cloud.lineTo(1.61,2.34);cloud.lineTo(1.61,2.79);
   cloud.bezierCurveTo(1.61,3.02,1.42,3.06,1.22,2.96);cloud.bezierCurveTo(1.06,3.16,.82,3.13,.68,3.05);
   cloud.bezierCurveTo(.42,3.58,-.42,3.58,-.68,3.05);cloud.bezierCurveTo(-.82,3.13,-1.06,3.16,-1.22,2.96);
@@ -187,6 +193,11 @@ export function createStorybookDesk() {
     if(i===2){const h=panel(b,'tiny heart on book cover',heartPath(0,0,.115),[.15,.107,0],.001,lightPink,.002);h.rotation.x=-Math.PI/2;}
   }
 
+  const textbook = createCampbellHardcover();
+  textbook.position.set(-1.05, 2.355, .359);
+  textbook.rotation.y = -.055;
+  desk.add(textbook);
+
   // A hollow pencil pot, rather than a filled cylinder with pencils sitting on it.
   const pot=new THREE.Group();pot.name='Writing corner | ceramic pencil cup';pot.position.set(-1.38,2.365,-.18);desk.add(pot);
   const cupPoints=[[0,0],[.15,0],[.169,.04],[.17,.37],[.155,.385],[.143,.37],[.143,.045],[0,.045]].map(p=>new THREE.Vector2(...p));
@@ -205,23 +216,34 @@ export function createStorybookDesk() {
 
   // Open notebook: bowed pages, a shallow central gutter and separate cover.
   const notebook=new THREE.Group();notebook.name='Writing corner | open floral notebook';notebook.position.set(-.04,2.38,.35);notebook.rotation.y=.10;desk.add(notebook);
-  const ruled=new THREE.MeshStandardMaterial({name:'Desk | ruled floral stationery',map:paperTexture(),roughness:.94,side:THREE.DoubleSide});
+  const pageLoader = new THREE.TextureLoader();
   function pageSurface(side,layer,material){
     const positions=[],uvs=[],indices=[],nx=32,nz=24;
     for(let j=0;j<=nz;j++)for(let i=0;i<=nx;i++){
       const u=i/nx,v=j/nz*2-1,x=side*(.012+u*.52),z=v*.30,y=.012+.047*Math.sin(u*Math.PI)+.016*u+.012*v*v*u+layer;
-      positions.push(x,y,z);uvs.push(side<0?1-u:u,(v+1)*.5);
+      positions.push(x,y,z);uvs.push(side<0?1-u:u,(1-v)*.5);
     }
     for(let j=0;j<nz;j++)for(let i=0;i<nx;i++){const a=j*(nx+1)+i,b=a+1,c=a+nx+1,d=c+1;side>0?indices.push(a,c,b,b,c,d):indices.push(a,b,c,b,d,c);}
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));g.setIndex(indices);g.computeVertexNormals();return mesh(notebook,'curved notebook pages',g,material);
   }
   for(const side of [-1,1]) {
+    const page = side < 0 ? 'left' : 'right';
+    const map = pageLoader.load(new URL('./assets/gmm-notebook-' + page + '.webp', import.meta.url).href);
+    map.colorSpace = THREE.SRGBColorSpace;
+    map.anisotropy = 8;
+    const ruled = new THREE.MeshPhysicalMaterial({name:'Handwritten GMM notes | '+page,map,roughness:1,specularIntensity:.1});
     const cover=pageSurface(side,-.025,lightPink);cover.scale.set(1.045,1,1.055);
     pageSurface(side,-.012,paper);pageSurface(side,0,ruled);
     tube(notebook,'notebook rounded cover edge',[[side*.548,.022,-.316],[side*.555,.028,0],[side*.548,.022,.316]],.006,pink);
   }
   tube(notebook,'notebook bound centre',[[0,.016,-.31],[0,.006,0],[0,.016,.31]],.008,lightPink);
   tube(notebook,'rose bookmark ribbon',[[.05,.01,.20],[.05,.005,.33],[.03,-.012,.38]],.009,pink);
+
+  const pen = createFountainPen();
+  pen.position.set(.66, 2.355 + .0268, .35);
+  pen.rotation.order = 'YXZ';
+  pen.rotation.set(-.029, .19, 0);
+  desk.add(pen);
 
   const bouquet=new THREE.Group();bouquet.name='Writing corner | daisy jar with ribbon';bouquet.position.set(1.07,2.365,-.39);desk.add(bouquet);
   const glass=new THREE.MeshPhysicalMaterial({name:'Desk | clear honey glass',color:'#f8ffef',transparent:true,opacity:.18,roughness:.17,metalness:0,specularIntensity:.5,depthWrite:false});
@@ -243,6 +265,6 @@ export function createStorybookDesk() {
 
   group.position.fromArray(DESK_PLACEMENT.position);group.rotation.y=DESK_PLACEMENT.rotation;
   let meshCount=0,triangles=0;group.traverse(o=>{if(o.isMesh){meshCount++;triangles+=(o.geometry.index?.count||o.geometry.attributes.position.count)/3;}});
-  group.userData={revision:'storybook-desk-1',meshCount,triangles,placement:DESK_PLACEMENT,heartOpenings:2,cushion:'volumetric rose gingham',scope:'desk and chair only',plan:FURNITURE_PLAN};
+  group.userData={revision:'desk-study-1',meshCount,triangles,placement:DESK_PLACEMENT,heartOpenings:2,cushion:'volumetric rose gingham',scope:'desk and chair only',plan:FURNITURE_PLAN,drawer:group.drawerController.state};
   return group;
 }

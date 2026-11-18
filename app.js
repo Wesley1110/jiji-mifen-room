@@ -11,9 +11,9 @@ import {createFairytaleDoor,bindDoorInteraction} from './door.js?revision=carrot
 import {createNavigation} from './navigation.js?revision=pink-carrot-garden-1';
 import {bindHouseInteraction} from './home-entrance.js?revision=garden-house-1';
 import {createPetting} from './petting.js?revision=plump-paw-4';
-import {createStorybookDesk} from './storybook-desk.js?revision=nightstand-preview-1';
+import {createStorybookDesk} from './storybook-desk.js?revision=desk-pen-1';
 import {createStorybookNightstand} from './storybook-nightstand.js?revision=nightstand-v5';
-import {bindDrawerInteraction} from './nightstand-drawer.js?revision=nightstand-v5';
+import {bindDrawerInteraction} from './nightstand-drawer.js?revision=desk-study-1';
 import {createHallwayGallery} from './hallway-gallery.js?revision=hallway-gallery-1';
 import {createStorybookDresser} from './storybook-dresser.js?revision=window-dresser-3';
 import {createStorybookWardrobe} from './storybook-wardrobe.js?revision=bunny-wardrobe-5';
@@ -23,10 +23,11 @@ const $=id=>document.getElementById(id), viewport=$('room');
 const menu=initMenu();
 const camera=new THREE.PerspectiveCamera(innerWidth<innerHeight?82:54,innerWidth/innerHeight,.05,200);
 const scene=new THREE.Scene();scene.background=new THREE.Color('#efe2d1');
-let renderer,orbit,plush,door,drawer,wardrobeController,petting,mode='orbit',floating=!matchMedia('(prefers-reduced-motion: reduce)').matches;
+let renderer,orbit,plush,door,drawer,deskDrawer,wardrobeController,petting,mode='orbit',floating=!matchMedia('(prefers-reduced-motion: reduce)').matches;
 const navigation=createNavigation(()=>door?.group.userData.angle||0,()=>door?.house.entry.angle||0);
 let lastInteraction=0,transition=null,drag=null,lastTime=0,frames=0,fpsTime=0,ready=false;
 let wheelTravel=0;
+let notebookView=false;
 const keys=new Set(), offset=new THREE.Vector3(),worldUp=new THREE.Vector3(0,1,0),temp=new THREE.Vector3();
 const walls=[];const poses={
  home:{pos:[-2.6,7.5,9.65],target:[-2.6,1.22,.9]},
@@ -35,6 +36,7 @@ const walls=[];const poses={
  rug:{pos:[-7.3,5.6,3.9],target:[-6.5,.05,1.5]},
  slippers:{pos:[-5.65,2.35,3.9],target:[-3.7,.20,1.75]},
  desk:{pos:[-5.15,4.35,9.55],target:[-8.65,1.82,5.62]},
+ notebook:{target:[-8.85,2.425,5.53]},
  nightstand:{pos:[-6.55,3.65,1.15],target:[-3.925,1.55,-1.8]},
  dresser:{pos:[-.15,3.90,2.55],target:[4.37,1.90,5.62]},
  wardrobe:{pos:[3.55,3.65,1.80],target:[1.30,2.43,9.18]},
@@ -54,6 +56,13 @@ function clearFloat(){camera.position.sub(offset);offset.set(0,0,0);}
 function goTo(name,instant=false){
  if(!orbit)return;clearFloat();setMode('orbit');let p=name==='home'&&innerWidth<innerHeight?{pos:[-2.6,10,16.8],target:[-2.6,1.22,1.5]}:poses[name];
  if(name==='gallery'){const distance=THREE.MathUtils.clamp(10.15/(2*Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*camera.aspect),4.8,10.5);p={pos:[2.044-distance,2.55,14.89],target:[2.044,2.27,14.89]};}
+ notebookView=name==='notebook';
+ if(notebookView){
+  const fieldHeight=Math.max(.80,1.53/camera.aspect);
+  const distance=fieldHeight/(2*Math.tan(THREE.MathUtils.degToRad(camera.fov/2)));
+  const [x,y,z]=p.target;
+  p={target:p.target,pos:[x+.31*distance,y+.95*distance,z-.031*distance]};
+ }
  if(name==='reading'&&camera.aspect<1.5){
   const target=p.target.map((v,i)=>v-(i===2?.95:0));p={target,pos:p.pos.map((v,i)=>target[i]+(v-p.target[i])*1.10)};
  }
@@ -124,7 +133,7 @@ async function init(){
  placeBedOccupants(gltf.scene,plush);
  const slippers=createBedsideSlippers(cloth);scene.add(slippers);meshCount+=slippers.userData.meshCount;
  door=createFairytaleDoor(gltf.scene,{canClose:()=>navigation.canClose(camera.position),canCloseEntry:()=>navigation.canCloseEntry(camera.position)});scene.add(door.group);meshCount+=door.group.userData.meshCount-door.group.userData.replacedMeshes;
- const desk=createStorybookDesk();scene.add(desk);meshCount+=desk.userData.meshCount;
+ const desk=createStorybookDesk();deskDrawer=desk.drawerController;scene.add(desk);meshCount+=desk.userData.meshCount;
  const nightstand=await createStorybookNightstand();scene.add(nightstand);meshCount+=nightstand.userData.meshCount;
  const dresser=createStorybookDresser();scene.add(dresser);meshCount+=dresser.userData.meshCount;
  const wardrobe=createStorybookWardrobe();scene.add(wardrobe);meshCount+=wardrobe.userData.meshCount;wardrobeController=wardrobe.wardrobeController;
@@ -132,7 +141,7 @@ async function init(){
  const gallery=await createHallwayGallery();scene.add(gallery);meshCount+=gallery.userData.meshCount;
  drawer=nightstand.drawerController;
  const doorInteraction=bindDoorInteraction({door,scene,camera,canvas:renderer.domElement,onInteract:interact});
- const drawerInteraction=bindDrawerInteraction({drawer,scene,camera,canvas:renderer.domElement,onInteract:interact});
+ const drawerInteraction=bindDrawerInteraction({drawers:[drawer,deskDrawer],scene,camera,canvas:renderer.domElement,onInteract:interact});
  const wardrobeInteraction=bindWardrobeInteraction({wardrobe:wardrobeController,scene,camera,canvas:renderer.domElement,onInteract:interact});
  const houseInteraction=bindHouseInteraction({house:door.house,scene,camera,canvas:renderer.domElement,onInteract:interact});
  petting=createPetting({scene,root:gltf.scene,plush,camera,canvas:renderer.domElement,getMode:()=>mode,setMode,onInteract:interact,isSceneControl:e=>doorInteraction.hitTest(e)||drawerInteraction.hitTest(e)||wardrobeInteraction.hitTest(e)||houseInteraction.hitTest(e)});
@@ -154,13 +163,13 @@ function animate(time){
    const step=wheelTravel*(1-Math.exp(-18*dt));navigation.move(camera.position,forward.multiplyScalar(step));wheelTravel-=step;
   }else wheelTravel=0;
  }
- if(floating&&!transition&&mode==='orbit'&&time-lastInteraction>3500){offset.set(Math.sin(time*.00026)*.075,Math.sin(time*.00045)*.055,Math.cos(time*.00030)*.055);camera.position.add(offset);camera.lookAt(orbit.target);}
+ if(floating&&!transition&&mode==='orbit'&&time-lastInteraction>3500){offset.set(Math.sin(time*.00026)*.075,Math.sin(time*.00045)*.055,Math.cos(time*.00030)*.055);if(notebookView)offset.multiplyScalar(.08);camera.position.add(offset);camera.lookAt(orbit.target);}
  // Keep the doorway and room walls when looking back from inside the hall.
  // Cutaway walls remain available for external overview/orbit cameras.
  const interiorView=mode==='fly'||navigation.inHallway(camera.position);
  for(const w of walls){w.mesh.visible=interiorView||!(w.name.startsWith('Wall 01')&&camera.position.z< -3.2 || w.name.startsWith('Wall 02')&&camera.position.x< -10.65 || w.name.startsWith('Wall 03')&&camera.position.z>10.15 || w.name.startsWith('Wall 04')&&camera.position.x>5.45);}
  if(door){door.group.visible=interiorView||camera.position.z<=10.15;door.update(time,camera.position);}
- door?.house.update(time,camera);drawer?.update(time);wardrobeController?.update(time);petting?.update(time,dt);plush?.userData.updateLOD(camera);renderer.render(scene,camera);frames++;if(time-fpsTime>1000){$('fps').textContent=`${Math.round(frames*1000/(time-fpsTime))} fps`;frames=0;fpsTime=time;}
+ door?.house.update(time,camera);drawer?.update(time);deskDrawer?.update(time);wardrobeController?.update(time);petting?.update(time,dt);plush?.userData.updateLOD(camera);renderer.render(scene,camera);frames++;if(time-fpsTime>1000){$('fps').textContent=`${Math.round(frames*1000/(time-fpsTime))} fps`;frames=0;fpsTime=time;}
 }
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{goTo(b.dataset.view);focusScene();});
 $('orbit').onclick=()=>{setMode('orbit');focusScene();};$('fly').onclick=()=>{setMode('fly');focusScene();};$('reset').onclick=()=>{goTo('home');focusScene();};
