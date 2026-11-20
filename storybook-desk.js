@@ -2,7 +2,8 @@ import * as THREE from 'three/webgpu';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {createCampbellHardcover} from './campbell-hardcover.js';
 import {createFountainPen} from './fountain-pen.js';
-import {createDrawerController} from './nightstand-drawer.js?revision=desk-study-1';
+import {createDrawerController} from './nightstand-drawer.js?revision=desk-secret-4';
+import {installDeskCompartment} from './desk-secret-compartment.js?revision=desk-secret-4';
 
 // Furniture is an independent, movable asset. All cutouts and upholstery have
 // actual depth; the reference illustration is not used as a billboard.
@@ -136,7 +137,8 @@ export function createStorybookDesk() {
   const pick = oval(tray,'round pull hit area',[0,1.94,.764],[.12,.12,.091],new THREE.MeshBasicMaterial({visible:false}));
   pick.castShadow = pick.receiveShadow = false;
   pick.userData.sceneControlPick = true;
-  group.drawerController = createDrawerController(tray,[pick],pull,{travel:.80,contents:'',handleLabel:'圓把手'});
+  const slide = createDrawerController(tray,[pick],pull,{travel:.99,contents:'Death Note',handleLabel:'圓把手'});
+  group.drawerController = installDeskCompartment(slide,{box,oval,rod,pale});
   const cloud=new THREE.Shape();cloud.moveTo(-1.61,2.34);cloud.lineTo(1.61,2.34);cloud.lineTo(1.61,2.79);
   cloud.bezierCurveTo(1.61,3.02,1.42,3.06,1.22,2.96);cloud.bezierCurveTo(1.06,3.16,.82,3.13,.68,3.05);
   cloud.bezierCurveTo(.42,3.58,-.42,3.58,-.68,3.05);cloud.bezierCurveTo(-.82,3.13,-1.06,3.16,-1.22,2.96);
@@ -265,6 +267,6 @@ export function createStorybookDesk() {
 
   group.position.fromArray(DESK_PLACEMENT.position);group.rotation.y=DESK_PLACEMENT.rotation;
   let meshCount=0,triangles=0;group.traverse(o=>{if(o.isMesh){meshCount++;triangles+=(o.geometry.index?.count||o.geometry.attributes.position.count)/3;}});
-  group.userData={revision:'desk-study-1',meshCount,triangles,placement:DESK_PLACEMENT,heartOpenings:2,cushion:'volumetric rose gingham',scope:'desk and chair only',plan:FURNITURE_PLAN,drawer:group.drawerController.state};
+  group.userData={revision:'desk-secret-4',meshCount,triangles,placement:DESK_PLACEMENT,heartOpenings:2,cushion:'volumetric rose gingham',scope:'desk and chair only',plan:FURNITURE_PLAN,drawer:group.drawerController.state,compartment:group.drawerController.compartment.state};
   return group;
 }

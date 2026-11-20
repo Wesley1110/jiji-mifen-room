@@ -3,11 +3,18 @@ import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {createPinkCarrotPlushes} from './wardrobe-plush.js?revision=bunny-wardrobe-5';
 import {drawerPuff} from './wardrobe-storage-motion.js?revision=bunny-wardrobe-5';
 
-// Use the approved faceless, sewn carrot and its deformed cloth leaves at
-// three scales. Small copies keep actual short fibres, not noisy sphere bumps.
+// Both the desk catch and the wardrobe use the same sewn miniatures.
+// Parts can be posed independently while their fabrics and geometry are shared.
+let miniPair;
+export function cloneMiniPinkCarrot(index=0){
+ miniPair ??= createPinkCarrotPlushes({detail:'mini',pose:'loose',plump:1.65});
+ return miniPair.children[index].clone(true);
+}
+
 function templates(detail){
- const source=createPinkCarrotPlushes({detail,pose:'loose',plump:detail==='mini'?1.65:1.48});
- return [...source.children].map((doll,k)=>{
+ const dolls=detail==='mini' ? [cloneMiniPinkCarrot(0),cloneMiniPinkCarrot(1)]
+  : [...createPinkCarrotPlushes({detail,pose:'loose',plump:1.48}).children];
+ return dolls.map((doll,k)=>{
   const g=new THREE.Group();g.add(doll);g.rotation.z=(k?1:-1)*Math.PI/2;
   g.updateMatrixWorld(true);
   const box=new THREE.Box3().setFromObject(doll.getObjectByName('Carrot plush | continuous padded carrot body')),center=box.getCenter(new THREE.Vector3());

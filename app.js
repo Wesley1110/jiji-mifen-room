@@ -11,12 +11,12 @@ import {createFairytaleDoor,bindDoorInteraction} from './door.js?revision=carrot
 import {createNavigation} from './navigation.js?revision=pink-carrot-garden-1';
 import {bindHouseInteraction} from './home-entrance.js?revision=garden-house-1';
 import {createPetting} from './petting.js?revision=plump-paw-4';
-import {createStorybookDesk} from './storybook-desk.js?revision=desk-pen-1';
+import {createStorybookDesk} from './storybook-desk.js?revision=desk-secret-4';
 import {createStorybookNightstand} from './storybook-nightstand.js?revision=nightstand-v5';
-import {bindDrawerInteraction} from './nightstand-drawer.js?revision=desk-study-1';
+import {bindDrawerInteraction} from './nightstand-drawer.js?revision=desk-secret-4';
 import {createHallwayGallery} from './hallway-gallery.js?revision=hallway-gallery-1';
 import {createStorybookDresser} from './storybook-dresser.js?revision=window-dresser-3';
-import {createStorybookWardrobe} from './storybook-wardrobe.js?revision=bunny-wardrobe-5';
+import {createStorybookWardrobe} from './storybook-wardrobe.js?revision=mini-carrot-template-1';
 import {bindWardrobeInteraction} from './wardrobe-interaction.js?revision=bunny-wardrobe-5';
 
 const $=id=>document.getElementById(id), viewport=$('room');
@@ -27,7 +27,7 @@ let renderer,orbit,plush,door,drawer,deskDrawer,wardrobeController,petting,mode=
 const navigation=createNavigation(()=>door?.group.userData.angle||0,()=>door?.house.entry.angle||0);
 let lastInteraction=0,transition=null,drag=null,lastTime=0,frames=0,fpsTime=0,ready=false;
 let wheelTravel=0;
-let notebookView=false;
+let closeupView=null;
 const keys=new Set(), offset=new THREE.Vector3(),worldUp=new THREE.Vector3(0,1,0),temp=new THREE.Vector3();
 const walls=[];const poses={
  home:{pos:[-2.6,7.5,9.65],target:[-2.6,1.22,.9]},
@@ -36,6 +36,7 @@ const walls=[];const poses={
  rug:{pos:[-7.3,5.6,3.9],target:[-6.5,.05,1.5]},
  slippers:{pos:[-5.65,2.35,3.9],target:[-3.7,.20,1.75]},
  desk:{pos:[-5.15,4.35,9.55],target:[-8.65,1.82,5.62]},
+ deskSecret:{target:[-8.005,1.97,5.65]},
  notebook:{target:[-8.85,2.425,5.53]},
  nightstand:{pos:[-6.55,3.65,1.15],target:[-3.925,1.55,-1.8]},
  dresser:{pos:[-.15,3.90,2.55],target:[4.37,1.90,5.62]},
@@ -56,12 +57,20 @@ function clearFloat(){camera.position.sub(offset);offset.set(0,0,0);}
 function goTo(name,instant=false){
  if(!orbit)return;clearFloat();setMode('orbit');let p=name==='home'&&innerWidth<innerHeight?{pos:[-2.6,10,16.8],target:[-2.6,1.22,1.5]}:poses[name];
  if(name==='gallery'){const distance=THREE.MathUtils.clamp(10.15/(2*Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*camera.aspect),4.8,10.5);p={pos:[2.044-distance,2.55,14.89],target:[2.044,2.27,14.89]};}
- notebookView=name==='notebook';
- if(notebookView){
+ const enteringSecret=name==='deskSecret'&&closeupView!==name;
+ closeupView=name==='notebook'||name==='deskSecret'?name:null;
+ if(name==='notebook'){
   const fieldHeight=Math.max(.80,1.53/camera.aspect);
   const distance=fieldHeight/(2*Math.tan(THREE.MathUtils.degToRad(camera.fov/2)));
   const [x,y,z]=p.target;
   p={target:p.target,pos:[x+.31*distance,y+.95*distance,z-.031*distance]};
+ }
+ if(name==='deskSecret'){
+  const fieldHeight=Math.max(1.35,2.46/camera.aspect);
+  const distance=fieldHeight/(2*Math.tan(THREE.MathUtils.degToRad(camera.fov/2)));
+  const [x,y,z]=p.target;
+  p={target:p.target,pos:[x+.25*distance,y+.96*distance,z+.105*distance]};
+  if(enteringSecret)deskDrawer?.setOpen(true);
  }
  if(name==='reading'&&camera.aspect<1.5){
   const target=p.target.map((v,i)=>v-(i===2?.95:0));p={target,pos:p.pos.map((v,i)=>target[i]+(v-p.target[i])*1.10)};
@@ -141,7 +150,7 @@ async function init(){
  const gallery=await createHallwayGallery();scene.add(gallery);meshCount+=gallery.userData.meshCount;
  drawer=nightstand.drawerController;
  const doorInteraction=bindDoorInteraction({door,scene,camera,canvas:renderer.domElement,onInteract:interact});
- const drawerInteraction=bindDrawerInteraction({drawers:[drawer,deskDrawer],scene,camera,canvas:renderer.domElement,onInteract:interact});
+ const drawerInteraction=bindDrawerInteraction({drawers:[drawer,deskDrawer,deskDrawer.compartment],scene,camera,canvas:renderer.domElement,onInteract:interact});
  const wardrobeInteraction=bindWardrobeInteraction({wardrobe:wardrobeController,scene,camera,canvas:renderer.domElement,onInteract:interact});
  const houseInteraction=bindHouseInteraction({house:door.house,scene,camera,canvas:renderer.domElement,onInteract:interact});
  petting=createPetting({scene,root:gltf.scene,plush,camera,canvas:renderer.domElement,getMode:()=>mode,setMode,onInteract:interact,isSceneControl:e=>doorInteraction.hitTest(e)||drawerInteraction.hitTest(e)||wardrobeInteraction.hitTest(e)||houseInteraction.hitTest(e)});
@@ -163,7 +172,7 @@ function animate(time){
    const step=wheelTravel*(1-Math.exp(-18*dt));navigation.move(camera.position,forward.multiplyScalar(step));wheelTravel-=step;
   }else wheelTravel=0;
  }
- if(floating&&!transition&&mode==='orbit'&&time-lastInteraction>3500){offset.set(Math.sin(time*.00026)*.075,Math.sin(time*.00045)*.055,Math.cos(time*.00030)*.055);if(notebookView)offset.multiplyScalar(.08);camera.position.add(offset);camera.lookAt(orbit.target);}
+ if(floating&&!transition&&mode==='orbit'&&time-lastInteraction>3500){offset.set(Math.sin(time*.00026)*.075,Math.sin(time*.00045)*.055,Math.cos(time*.00030)*.055);if(closeupView)offset.multiplyScalar(.08);camera.position.add(offset);camera.lookAt(orbit.target);}
  // Keep the doorway and room walls when looking back from inside the hall.
  // Cutaway walls remain available for external overview/orbit cameras.
  const interiorView=mode==='fly'||navigation.inHallway(camera.position);
@@ -201,5 +210,5 @@ addEventListener('keydown',e=>{
 });
 addEventListener('keyup',e=>keys.delete(e.code));addEventListener('blur',()=>{keys.clear();drag=null;wheelTravel=0;});document.addEventListener('visibilitychange',()=>{keys.clear();wheelTravel=0;});
 document.querySelectorAll('[data-key]').forEach(b=>{b.onpointerdown=e=>{e.preventDefault();if(mode!=='fly')setMode('fly');b.setPointerCapture(e.pointerId);keys.add(b.dataset.key);};b.onpointerup=b.onpointercancel=()=>keys.delete(b.dataset.key);});
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.fov=innerWidth<innerHeight?82:54;camera.updateProjectionMatrix();renderer?.setSize(innerWidth,innerHeight);if(mode==='orbit')goTo(document.querySelector('[data-view].active')?.dataset.view||'home',true);});
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.fov=innerWidth<innerHeight?82:54;camera.updateProjectionMatrix();renderer?.setSize(innerWidth,innerHeight);if(mode==='orbit')goTo(document.querySelector('[data-view].active')?.dataset.view||closeupView||'home',true);});
 init().catch(e=>{console.error(e);$('loading').hidden=true;$('error').hidden=false;$('errorText').textContent='請使用已開啟硬體加速的 Chrome 或 Edge，再重新載入。'+e.message;$('backend').textContent='載入失敗';});

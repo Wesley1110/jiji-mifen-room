@@ -29,17 +29,40 @@ export function bindDrawerInteraction({drawer,drawers=[drawer],scene,camera,canv
  function show(value,event={}){
   canvas.dataset.drawerHover=value?'true':'';canvas.style.cursor=value||canvas.dataset.doorHover==='true'?'pointer':'';
   for(const item of drawers){
+   if(item.highlightOnHover===false)continue;
    const material=item.knob.material;
    material.emissive.set(item===value?'#715435':'#000000');
    material.emissiveIntensity=item===value ? .15 : 0;
   }
-  tip.hidden=!value;if(value){tip.textContent='點'+(value.handleLabel||'花朵握把')+(value.state.open?'關上抽屜':'打開抽屜');tip.style.left=Math.max(8,Math.min(innerWidth-190,event.clientX+16))+'px';tip.style.top=Math.max(8,Math.min(innerHeight-60,event.clientY+18))+'px';}
+  tip.hidden=!value;if(value){tip.textContent=value.hint??('點'+(value.handleLabel||'花朵握把')+(value.state.open?'關上抽屜':'打開抽屜'));tip.style.left=Math.max(8,Math.min(innerWidth-190,event.clientX+16))+'px';tip.style.top=Math.max(8,Math.min(innerHeight-60,event.clientY+18))+'px';}
  }
- canvas.addEventListener('pointerdown',e=>{if(e.button!==0)return;down={id:e.pointerId,x:e.clientX,y:e.clientY,time:performance.now(),hit:hit(e)};});
- canvas.addEventListener('pointermove',e=>{if(down&&Math.hypot(e.clientX-down.x,e.clientY-down.y)>7)down.hit=false;if(e.buttons||performance.now()-last<60)return;last=performance.now();show(hit(e),e);});
- canvas.addEventListener('pointerup',e=>{if(down&&e.pointerId===down.id&&down.hit&&performance.now()-down.time<700&&Math.hypot(e.clientX-down.x,e.clientY-down.y)<7&&hit(e)===down.hit){down.hit.toggle();onInteract();show(false);}down=null;});
- const clear=()=>{down=null;show(false);};
- canvas.addEventListener('pointercancel',clear);canvas.addEventListener('pointerleave',()=>show(false));canvas.addEventListener('wheel',()=>show(false),{passive:true});
+ function releasePress(now=performance.now()){
+  down?.hit?.setPressed?.(false,now);
+  down=null;
+ }
+ canvas.addEventListener('pointerdown',e=>{
+  if(e.button!==0)return;
+  releasePress();
+  if(e.isPrimary===false)return;
+  const owner=hit(e), now=performance.now();
+  down={id:e.pointerId,x:e.clientX,y:e.clientY,time:now,hit:owner};
+  owner?.setPressed?.(true,now);
+ });
+ canvas.addEventListener('pointermove',e=>{
+  if(down&&down.id===e.pointerId&&Math.hypot(e.clientX-down.x,e.clientY-down.y)>7)releasePress();
+  if(e.buttons||performance.now()-last<60)return;
+  last=performance.now();show(hit(e),e);
+ });
+ canvas.addEventListener('pointerup',e=>{
+  if(!down||e.pointerId!==down.id)return;
+  const owner=down.hit;
+  if(owner&&(owner.setPressed||performance.now()-down.time<700)&&Math.hypot(e.clientX-down.x,e.clientY-down.y)<7&&hit(e)===owner){
+   owner.toggle();onInteract();show(false);
+  }
+  releasePress();
+ });
+ const clear=()=>{releasePress();show(false);};
+ canvas.addEventListener('pointercancel',clear);canvas.addEventListener('pointerleave',clear);canvas.addEventListener('wheel',()=>show(false),{passive:true});
  document.addEventListener('pointerdown',()=>show(false));addEventListener('keydown',()=>show(false));addEventListener('blur',clear);
  return {hitTest:e=>Boolean(hit(e))};
 }

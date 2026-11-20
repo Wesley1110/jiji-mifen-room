@@ -5,7 +5,7 @@ import {heartPath} from './storybook-desk.js?revision=nightstand-preview-1';
 import {makeHinokiMaterials,makeWovenMaterial} from './wardrobe-materials.js?revision=bunny-wardrobe-5';
 import {createPinkCarrotPlushes} from './wardrobe-plush.js?revision=bunny-wardrobe-5';
 import {createWardrobeController} from './wardrobe-interaction.js?revision=bunny-wardrobe-5';
-import {createCarrotShelf,createDrawerCarrotHeap} from './wardrobe-carrot-storage.js?revision=bunny-wardrobe-5';
+import {createCarrotShelf,createDrawerCarrotHeap} from './wardrobe-carrot-storage.js?revision=mini-carrot-template-1';
 
 // The viewer stands at the bed facing +Z: +X is the left side of the doorway.
 // Local +Z is the cabinet front. Keep this movable asset independent of the GLB.
