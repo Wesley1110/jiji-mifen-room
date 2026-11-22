@@ -26,6 +26,7 @@ function coverGeometry() {
     const curl=.0022*(u**6)*(1-v)**4;
     position.setXYZ(i,x,position.getY(i)+groove+curl,z);
     if (normal.getY(i)>.9) uv.setXY(i,u,v);
+    if (normal.getY(i)<-.9) uv.setXY(i,1-u,v);
   }
   geometry.computeVertexNormals();
   return geometry;
@@ -68,13 +69,62 @@ export function createDeathNote() {
     part.position.set(x,y,z);
     part.castShadow=part.receiveShadow=true;
     book.add(part);
+    return part;
   }
   add('back cover',new RoundedBoxGeometry(WIDTH,BOARD,LENGTH,3,.002),black,0,BOARD/2,0);
   add('ivory leaves',new RoundedBoxGeometry(WIDTH-.014,PAPER,LENGTH-.014,4,.004),
     [deckle,deckle,paper,paper,deckle,deckle],.002,BOARD+PAPER/2,0);
-  add('silk black cover',coverGeometry(),[black,black,front,black,black,black],
+  const cover=add('silk black cover',coverGeometry(),[black,black,front,black,black,black],
     0,BOARD+PAPER+BOARD/2,0);
   add('rounded bound spine',new RoundedBoxGeometry(.021,2*BOARD+PAPER,LENGTH-.001,4,.009),
     black,-WIDTH/2+.007,BOARD+PAPER/2,0);
-  return book;
+  const hinge=new THREE.Group();
+  hinge.position.set(-WIDTH/2+.006,cover.position.y,0);
+  book.add(hinge);
+  hinge.add(cover);
+  cover.position.set(-hinge.position.x,0,0);
+
+  function printMaterial(filename, cutout=false) {
+    const map=new THREE.TextureLoader().load(new URL('./assets/'+filename,import.meta.url).href);
+    map.colorSpace=THREE.SRGBColorSpace;
+    map.anisotropy=8;
+    return new THREE.MeshStandardMaterial({map,roughness:cutout ? .8 : .96,alphaTest:cutout ? .48 : 0});
+  }
+  const stationery=printMaterial('death-note-endpaper.webp');
+  // Bind the lining directly to the underside so it follows the same crease.
+  cover.material[3]=stationery;
+  function leaf(name,material,width,length,y) {
+    const sheet=new THREE.Mesh(new THREE.PlaneGeometry(width,length),material);
+    sheet.name='Death Note | '+name;
+    sheet.rotation.x=-Math.PI/2;
+    sheet.position.y=y;
+    sheet.receiveShadow=true;
+    book.add(sheet);
+    return sheet;
+  }
+  const first=leaf('first leaf',stationery,WIDTH-.018,LENGTH-.018,BOARD+PAPER+.00025);
+  const photoWidth=.28, photoLength=.386;
+  const photo=leaf('corner-mounted family portrait',printMaterial('death-note-family-print.webp',true),
+    photoWidth,photoLength,BOARD+PAPER+.0009);
+  photo.rotateZ(-.015);
+  photo.position.x=.007;
+  photo.position.z=.012;
+  // Fine diagonal incisions extend just past each corner of the print.
+  const slitInk=new THREE.MeshStandardMaterial({color:'#786650',roughness:.99});
+  for(const sx of [-1,1]) for(const sy of [-1,1]) {
+    const a=new THREE.Vector2(sx*(photoWidth/2-.050),sy*(photoLength/2+.003));
+    const b=new THREE.Vector2(sx*(photoWidth/2+.003),sy*(photoLength/2-.046));
+    const slit=new THREE.Mesh(new THREE.PlaneGeometry(a.distanceTo(b),.0018),slitInk);
+    slit.position.set((a.x+b.x)/2,(a.y+b.y)/2,.0003);
+    slit.rotation.z=Math.atan2(b.y-a.y,b.x-a.x);
+    photo.add(slit);
+  }
+
+  return {book,pickTargets:[cover,first,photo],pose(amount) {
+    // Lift the fore edge about the sewn spine. The small shift clears the left ledge.
+    hinge.rotation.z=2.99*amount;
+    book.position.x=-.070+.068*amount;
+    book.position.z=.174+.018*amount;
+    first.visible=photo.visible=amount>.008;
+  }};
 }

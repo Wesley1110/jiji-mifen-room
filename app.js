@@ -11,9 +11,9 @@ import {createFairytaleDoor,bindDoorInteraction} from './door.js?revision=carrot
 import {createNavigation} from './navigation.js?revision=pink-carrot-garden-1';
 import {bindHouseInteraction} from './home-entrance.js?revision=garden-house-1';
 import {createPetting} from './petting.js?revision=plump-paw-4';
-import {createStorybookDesk} from './storybook-desk.js?revision=desk-secret-4';
+import {createStorybookDesk} from './storybook-desk.js?revision=family-print-1';
 import {createStorybookNightstand} from './storybook-nightstand.js?revision=nightstand-v5';
-import {bindDrawerInteraction} from './nightstand-drawer.js?revision=desk-secret-4';
+import {bindDrawerInteraction} from './nightstand-drawer.js?revision=family-print-1';
 import {createHallwayGallery} from './hallway-gallery.js?revision=hallway-gallery-1';
 import {createStorybookDresser} from './storybook-dresser.js?revision=window-dresser-3';
 import {createStorybookWardrobe} from './storybook-wardrobe.js?revision=mini-carrot-template-1';
@@ -150,7 +150,7 @@ async function init(){
  const gallery=await createHallwayGallery();scene.add(gallery);meshCount+=gallery.userData.meshCount;
  drawer=nightstand.drawerController;
  const doorInteraction=bindDoorInteraction({door,scene,camera,canvas:renderer.domElement,onInteract:interact});
- const drawerInteraction=bindDrawerInteraction({drawers:[drawer,deskDrawer,deskDrawer.compartment],scene,camera,canvas:renderer.domElement,onInteract:interact});
+ const drawerInteraction=bindDrawerInteraction({drawers:[drawer,deskDrawer,deskDrawer.compartment,deskDrawer.bookControl],scene,camera,canvas:renderer.domElement,onInteract:interact});
  const wardrobeInteraction=bindWardrobeInteraction({wardrobe:wardrobeController,scene,camera,canvas:renderer.domElement,onInteract:interact});
  const houseInteraction=bindHouseInteraction({house:door.house,scene,camera,canvas:renderer.domElement,onInteract:interact});
  petting=createPetting({scene,root:gltf.scene,plush,camera,canvas:renderer.domElement,getMode:()=>mode,setMode,onInteract:interact,isSceneControl:e=>doorInteraction.hitTest(e)||drawerInteraction.hitTest(e)||wardrobeInteraction.hitTest(e)||houseInteraction.hitTest(e)});

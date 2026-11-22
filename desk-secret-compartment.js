@@ -1,6 +1,6 @@
 import * as THREE from 'three/webgpu';
-import {createDeathNote} from './death-note.js';
-import {interlockDrawer} from './desk-compartment-motion.js';
+import {createDeathNote} from './death-note.js?revision=family-print-1';
+import {interlockDrawer} from './desk-compartment-motion.js?revision=family-print-1';
 import {cloneMiniPinkCarrot} from './wardrobe-carrot-storage.js?revision=mini-carrot-template-1';
 import {createCarrotCatchPress} from './carrot-catch-press.js?revision=desk-secret-4';
 
@@ -93,7 +93,8 @@ export function installDeskCompartment(slide, {box, oval, rod, pale}) {
   const tab=makeLiftRibbon();
   tab.position.set(.091,1.819,.270); tab.rotation.y=-.13;
   lining.add(tab);
-  const book=createDeathNote();
+  const notebook=createDeathNote();
+  const {book}=notebook;
   book.position.set(-.070,1.819,.174); book.rotation.y=-.035;
   lining.add(book);
   lining.visible=false;
@@ -134,6 +135,11 @@ export function installDeskCompartment(slide, {box, oval, rod, pale}) {
 
   const press=createCarrotCatchPress(carrot);
   const motion=interlockDrawer(slide);
+  const bookControl={
+    pickTargets:notebook.pickTargets, highlightOnHover:false, canPick:motion.canRead,
+    get hint() { return motion.book.open ? '闔上筆記本' : '翻開筆記本'; },
+    toggle:motion.toggleBook
+  };
   const compartment={
     state:motion.lid, knob, pickTargets:[pick], hint:'暗層', highlightOnHover:false,
     setPressed:press.setPressed,
@@ -144,10 +150,11 @@ export function installDeskCompartment(slide, {box, oval, rod, pale}) {
     }
   };
   return {
-    ...slide, compartment, setOpen:motion.setOpen, toggle:motion.toggle,
+    ...slide, compartment, bookControl, setOpen:motion.setOpen, toggle:motion.toggle,
     get hint() { return motion.wantsDrawerOpen() ? '點圓把手收回抽屜' : '點圓把手拉開抽屜'; },
     update(now) {
       motion.update(now);
+      notebook.pose(motion.book.amount);
       const amount=motion.lid.amount;
       pivot.rotation.x=-OPEN_ANGLE*amount;
       catchGroup.visible=slide.state.extension>0;

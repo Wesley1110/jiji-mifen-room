@@ -20,7 +20,9 @@ export function bindDrawerInteraction({drawer,drawers=[drawer],scene,camera,canv
   const rect=canvas.getBoundingClientRect(),locked=document.pointerLockElement===canvas;
   pointer.set(locked?0:(event.clientX-rect.left)/rect.width*2-1,locked?0:-(event.clientY-rect.top)/rect.height*2+1);
   scene.updateMatrixWorld(true);ray.setFromCamera(pointer,camera);
-  const target=ray.intersectObjects([...owners.keys()].filter(visible),false)[0];if(!target)return null;
+  const targets=[];
+  for(const [mesh,item] of owners) if(visible(mesh) && (!item.canPick || item.canPick())) targets.push(mesh);
+  const target=ray.intersectObjects(targets,false)[0];if(!target)return null;
   const blockers=[];scene.traverse(o=>{if(o.isMesh&&visible(o)&&!o.userData.sceneControlPick&&!o.userData.doorPick&&!o.userData.fiberCount&&!o.userData.isHand&&o.material?.visible!==false)blockers.push(o);});
   const obstruction=ray.intersectObjects(blockers,false)[0];
   if(obstruction && obstruction.distance<target.distance-.008)return null;

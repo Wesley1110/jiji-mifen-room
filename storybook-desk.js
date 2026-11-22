@@ -2,8 +2,8 @@ import * as THREE from 'three/webgpu';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {createCampbellHardcover} from './campbell-hardcover.js';
 import {createFountainPen} from './fountain-pen.js';
-import {createDrawerController} from './nightstand-drawer.js?revision=desk-secret-4';
-import {installDeskCompartment} from './desk-secret-compartment.js?revision=desk-secret-4';
+import {createDrawerController} from './nightstand-drawer.js?revision=family-print-1';
+import {installDeskCompartment} from './desk-secret-compartment.js?revision=family-print-1';
 
 // Furniture is an independent, movable asset. All cutouts and upholstery have
 // actual depth; the reference illustration is not used as a billboard.
@@ -267,6 +267,6 @@ export function createStorybookDesk() {
 
   group.position.fromArray(DESK_PLACEMENT.position);group.rotation.y=DESK_PLACEMENT.rotation;
   let meshCount=0,triangles=0;group.traverse(o=>{if(o.isMesh){meshCount++;triangles+=(o.geometry.index?.count||o.geometry.attributes.position.count)/3;}});
-  group.userData={revision:'desk-secret-4',meshCount,triangles,placement:DESK_PLACEMENT,heartOpenings:2,cushion:'volumetric rose gingham',scope:'desk and chair only',plan:FURNITURE_PLAN,drawer:group.drawerController.state,compartment:group.drawerController.compartment.state};
+  group.userData={revision:'family-print-1',meshCount,triangles,placement:DESK_PLACEMENT,heartOpenings:2,cushion:'volumetric rose gingham',scope:'desk and chair only',plan:FURNITURE_PLAN,drawer:group.drawerController.state,compartment:group.drawerController.compartment.state};
   return group;
 }
