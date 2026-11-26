@@ -7,8 +7,8 @@ import {upgradeFairytaleBed} from './bed.js?revision=storybook-bed-2';
 import {placeBedOccupants} from './bedding.js?revision=bedding-2';
 import {initMenu} from './menu.js?revision=room-details-1';
 import {createBedsideSlippers} from './house-slippers.js?revision=room-details-4';
-import {createFairytaleDoor,bindDoorInteraction} from './door.js?revision=carrot-lounge-1';
-import {createNavigation} from './navigation.js?revision=pink-carrot-garden-1';
+import {createFairytaleDoor,bindDoorInteraction} from './door.js?revision=foyer-sewn-2';
+import {createNavigation} from './navigation.js?revision=foyer-cane-4';
 import {bindHouseInteraction} from './home-entrance.js?revision=garden-house-1';
 import {createPetting} from './petting.js?revision=plump-paw-4';
 import {createStorybookDesk} from './storybook-desk.js?revision=family-print-1';
@@ -45,6 +45,11 @@ const walls=[];const poses={
  door:{pos:[-2.5,2.35,5.7],target:[-3.55,1.65,10.2]},
  gallery:{pos:[-6.8,2.55,14.89],target:[2.044,2.27,14.89]},
  reading:{pos:[-8.75,2.58,16.87],target:[-14.40,1.30,15.80]},
+ readingPortrait:{pos:[-11.10,2.84,16.36],target:[-11.73,2.96,13.62]},
+ foyer:{pos:[-8.53,3.48,11.35],target:[-2.64,.82,16.24]},
+ foyerDetail:{pos:[-.32,2.27,18.14],target:[-.17,1.67,18.91]},
+ foyerRunner:{pos:[-6.48,2.40,18.36],target:[-3.74,.13,15.15]},
+ foyerStitch:{pos:[-4.24,.79,18.00],target:[-3.80,.011,17.13]},
  entry:{pos:[-5.10,2.50,15.15],target:[-7.15,1.75,19.48]},
  porch:{pos:[-6.60,2.45,25.70],target:[-7.15,1.90,19.53]},
  garden:{pos:[1.55,4.16,27.80],target:[-7.35,.68,24.75]},

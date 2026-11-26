@@ -3,6 +3,8 @@
 import {CARROT_BEDS} from './carrot-garden-layout.js';
 export const HOUSE_ORIGIN={x:-3.55,z:10.08};
 export const ENTRY={x:-7.15,z:19.53,hingeX:-8.05,width:1.8,maximum:Math.PI*.52};
+// Hall-local centre on the solid wall between the garden window and gallery.
+export const FOYER_CONSOLE={x:3.72,z:8.86,width:2.46,depth:.79,height:1.64};
 export const HOUSE_BOUNDS={
  room:{x0:-10.35,x1:5.15,y0:.3,y1:7.7,z0:-2.95,z1:10.02},
  hall:{x0:-8.95,x1:1.84,y0:.3,y1:4.43,z0:10.51,z1:19.18},

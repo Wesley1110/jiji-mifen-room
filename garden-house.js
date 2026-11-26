@@ -1,8 +1,9 @@
 import * as THREE from 'three/webgpu';
 import {housePalette,craft,archShape,archSurround,contactShadow} from './house-craft.js';
 import {createHomeEntrance} from './home-entrance.js';
-import {createReadingRoom} from './reading-room.js?revision=carrot-lounge-1';
+import {createReadingRoom} from './reading-room.js?revision=plush-portrait-1';
 import {createPinkCarrotGarden} from './carrot-garden.js?revision=pink-carrot-garden-1';
+import {addFoyerFurniture} from './foyer-furniture.js?revision=foyer-sewn-2';
 
 // Local origin is the bedroom doorway. The visitor's RIGHT is negative X.
 export function createGardenHouse(_bedroomWood,{canCloseEntry=()=>true}={}){
@@ -69,6 +70,7 @@ export function createGardenHouse(_bedroomWood,{canCloseEntry=()=>true}={}){
  const frontWindow=group('front garden window',[.115,0,9.32]);windowFrame(frontWindow,3.83);
  const sideWindow=group('reading garden window',[-12.92,0,5.85],Math.PI/2);windowFrame(sideWindow,3.74);
  const entry=createHomeEntrance(m,{canClose:canCloseEntry});root.add(entry.root);
+ addFoyerFurniture(root,m);
  const reading=createReadingRoom(m);root.add(reading.root);
  // Calm ceiling beams and a real linen shade replace the single bare orb.
  for(const z of [1.0,4.9,8.8])box(root,'hall ceiling timber beam',[11.25,.13,.16],[0,4.59,z],m.horizontal,.025);

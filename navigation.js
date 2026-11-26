@@ -1,8 +1,13 @@
 // Camera clearance is expressed in scene units. The doorway connects the
 // bedroom and hallway; a wider overall bounding box would allow wall clipping.
 const RADIUS=.16;
-import {HOUSE_BOUNDS,ENTRY,READING_OBSTACLES,GARDEN_OBSTACLES} from './house-layout.js';
-const OBSTACLES=[...READING_OBSTACLES,...GARDEN_OBSTACLES];
+import {HOUSE_BOUNDS,HOUSE_ORIGIN,ENTRY,FOYER_CONSOLE,READING_OBSTACLES,GARDEN_OBSTACLES} from './house-layout.js?revision=foyer-cane-4';
+const consoleX=HOUSE_ORIGIN.x+FOYER_CONSOLE.x,consoleZ=HOUSE_ORIGIN.z+FOYER_CONSOLE.z;
+const OBSTACLES=[...READING_OBSTACLES,...GARDEN_OBSTACLES,{
+  x0:consoleX-FOYER_CONSOLE.width/2,x1:consoleX+FOYER_CONSOLE.width/2,
+  z0:consoleZ-FOYER_CONSOLE.depth/2-.10,z1:consoleZ+FOYER_CONSOLE.depth/2,
+  y0:0,y1:FOYER_CONSOLE.height
+}];
 const {room:ROOM,hall:HALL,reading:PASSAGE,garden:GARDEN}=HOUSE_BOUNDS;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const inBox=(p,b)=>p.x>=b.x0&&p.x<=b.x1&&p.y>=b.y0&&p.y<=b.y1&&p.z>=b.z0&&p.z<=b.z1;
