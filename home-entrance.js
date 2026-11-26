@@ -56,7 +56,11 @@ export function createHomeEntrance(m,{canClose=()=>true}={}){
   if(target>0&&!canClose())return false;
   from=angle;target=target?0:ENTRY.maximum;start=time;root.userData.open=target>0;return true;
  }
- function update(time){const t=THREE.MathUtils.clamp((time-start)/1000,0,1);angle=THREE.MathUtils.lerp(from,target,t*t*(3-2*t));pivot.rotation.y=angle;root.userData.angle=angle;}
+ function update(time){
+  const t=THREE.MathUtils.clamp((time-start)/1000,0,1),next=THREE.MathUtils.lerp(from,target,t*t*(3-2*t));
+  if(next!==angle&&!canClose(angle,next)){start=time;from=angle;}else angle=next;
+  pivot.rotation.y=angle;root.userData.angle=angle;
+ }
  root.userData={revision:'home-entrance-1',open:false,angle:0};
  return {root,pivot,pickTargets,toggle,update,get angle(){return angle;}};
 }

@@ -1,6 +1,6 @@
 import * as THREE from 'three/webgpu';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
-import {createGardenHouse as createHallway} from './garden-house.js?revision=foyer-sewn-2';
+import {createGardenHouse as createHallway} from './garden-house.js?revision=camera-walls-1';
 
 function hinokiGrain(){
  const c=document.createElement('canvas');c.width=c.height=768;const x=c.getContext('2d');x.fillStyle='#d9b98a';x.fillRect(0,0,768,768);
@@ -79,8 +79,10 @@ export function createFairytaleDoor(root,{canClose=()=>true,canCloseEntry=()=>tr
  const maximum=Math.PI*.49,duration=1050;
  function toggle(time=performance.now()){if(target>0&&!canClose())return false;from=angle;target=target?0:maximum;start=time;group.userData.open=target>0;group.userData.moving=Math.abs(angle-target)>.0001;return true;}
  function update(time,viewer){
-  const t=THREE.MathUtils.clamp((time-start)/duration,0,1),ease=t*t*(3-2*t);angle=THREE.MathUtils.lerp(from,target,ease);pivot.rotation.y=angle;
-  group.userData.angle=angle;group.userData.moving=t<1&&Math.abs(angle-target)>.0001;entry.visible=angle>.015||(viewer&&viewer.z>10.08);
+  const t=THREE.MathUtils.clamp((time-start)/duration,0,1),ease=t*t*(3-2*t),next=THREE.MathUtils.lerp(from,target,ease);
+  if(next!==angle&&!canClose(angle,next)){start=time;from=angle;}else angle=next;
+  pivot.rotation.y=angle;
+  group.userData.angle=angle;group.userData.moving=Math.abs(angle-target)>.0001;entry.visible=angle>.015||(viewer&&viewer.z>10.08);
  }
  let meshCount=0;group.traverse(o=>{if(o.isMesh&&!o.userData.doorPick)meshCount++;});
  group.userData={revision:'hinoki-door-3',meshCount,replacedMeshes:replaced,open:false,angle:0,moving:false,maximumAngle:maximum,hinge:'left',swing:'inward',hallway:entry.userData};

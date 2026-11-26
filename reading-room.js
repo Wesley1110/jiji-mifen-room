@@ -2,7 +2,7 @@ import * as THREE from 'three/webgpu';
 import {craft,roundLoop,pillowGeometry,contactShadow} from './house-craft.js';
 import {createSofaCarrots,createCarrotPicture} from './reading-carrots.js?revision=carrot-lounge-1';
 import {createCarrotJuiceService} from './carrot-juice.js?revision=carrot-lounge-1';
-import {hangReadingPortrait} from './reading-portrait.js';
+import {hangReadingPortraits} from './reading-portrait.js?revision=garden-portrait-1';
 
 export function createReadingRoom(m){
  const root=new THREE.Group();root.name='Garden reading living room';
@@ -71,7 +71,7 @@ export function createReadingRoom(m){
  box(book,'rose ribbon bookmark',[.022,.004,.46],[.018,.032,.035],m.rose,.001);
 
  const shelf=group('Low arched library cabinet',[-8.18,0,3.77]);
- hangReadingPortrait(root,m);
+ hangReadingPortraits(root,m);
  for(const x of [-1.03,1.03])box(shelf,'rounded cabinet foot',[.16,.23,.43],[x,.10,0],m.wood,.06);
  box(shelf,'recessed cabinet back',[2.16,1.29,.06],[0,.83,-.24],m.inner,.02);
  for(const x of [-1.07,1.07])box(shelf,'upright library stile',[.13,1.33,.51],[x,.85,0],m.wood,.035);

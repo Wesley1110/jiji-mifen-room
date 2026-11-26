@@ -29,9 +29,9 @@ function moulding(width,height,profile) {
   return geo;
 }
 
-export function hangReadingPortrait(room,m) {
+function hangPortrait(room,m,name,position,yaw,printUrl) {
   const {group,box,mesh}=craft(room,'Reading portrait');
-  const frame=group('Jiji and Mifen in a hinoki frame',[-8.18,3.27,3.501]);
+  const frame=group(name,position,yaw);
   const printW=1.70, printH=1.19, margin=.114, rail=.091;
   const matW=printW+2*margin, matH=printH+2*margin;
   box(frame,'recessed wooden back',[matW+rail,matH+rail,.021],[0,0,.011],m.edge,.007);
@@ -43,9 +43,16 @@ export function hangReadingPortrait(room,m) {
   mesh(frame,'warm cotton window mat',moulding(matW+.004,matH+.004,[
     [0,.057],[margin-.003,.057],[margin+.002,.052]
   ]),m.paper);
-  const paper=new THREE.TextureLoader().load(new URL('./assets/reading-plush-portrait.webp',import.meta.url).href);
+  const paper=new THREE.TextureLoader().load(printUrl.href);
   paper.colorSpace=THREE.SRGBColorSpace;paper.anisotropy=8;
   const photo=mesh(frame,'portrait print',new THREE.PlaneGeometry(printW+.006,printH+.0042),
     new THREE.MeshBasicMaterial({map:paper,toneMapped:false}));
   photo.position.z=.050;photo.castShadow=photo.receiveShadow=false;
+}
+
+export function hangReadingPortraits(room,m) {
+  hangPortrait(room,m,'Jiji and Mifen in a hinoki frame',[-8.18,3.27,3.501],0,
+    new URL('./assets/reading-plush-portrait.webp',import.meta.url));
+  hangPortrait(room,m,'An afternoon in the carrot garden',[-8.18,3.27,8.219],Math.PI,
+    new URL('./assets/reading-carrot-garden-portrait.webp',import.meta.url));
 }

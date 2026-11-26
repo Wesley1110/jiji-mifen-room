@@ -10,6 +10,7 @@ const OBSTACLES=[...READING_OBSTACLES,...GARDEN_OBSTACLES,{
 }];
 const {room:ROOM,hall:HALL,reading:PASSAGE,garden:GARDEN}=HOUSE_BOUNDS;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+const stepsBetween=(dx,dy,dz)=>Math.max(1,Math.ceil(Math.hypot(dx,dy,dz)/.055));
 const inBox=(p,b)=>p.x>=b.x0&&p.x<=b.x1&&p.y>=b.y0&&p.y<=b.y1&&p.z>=b.z0&&p.z<=b.z1;
 const insideFurniture=(p,b)=>p.x>b.x0-RADIUS&&p.x<b.x1+RADIUS&&p.z>b.z0-RADIUS&&p.z<b.z1+RADIUS&&p.y>b.y0&&p.y<b.y1+RADIUS;
 
@@ -58,23 +59,51 @@ export function createNavigation(getDoorAngle,getEntryAngle=()=>0){
   }
   if(best){p.x=best.x;p.y=best.y;p.z=best.z;}return p;
  }
- function move(p,delta){
+ function move(p,delta,slide=true){
   // Substeps prevent a fast diagonal or scroll movement from tunnelling past
   // the thin wall or door. Axis retries make sliding along walls possible.
-  const count=Math.max(1,Math.ceil(Math.hypot(delta.x,delta.y,delta.z)/.055)),step={x:delta.x/count,y:delta.y/count,z:delta.z/count};
+  const count=stepsBetween(delta.x,delta.y,delta.z),step={x:delta.x/count,y:delta.y/count,z:delta.z/count};
   for(let i=0;i<count;i++){
    const q={x:p.x+step.x,y:p.y+step.y,z:p.z+step.z};
    if(allowed(q)){p.x=q.x;p.y=q.y;p.z=q.z;continue;}
+   if(!slide)break;
    for(const axis of ['x','z','y']){
     const q={x:p.x,y:p.y,z:p.z};q[axis]+=step[axis];if(allowed(q))p[axis]=q[axis];
    }
   }
   return p;
  }
- function canClose(p){
-  for(let angle=0;angle<=getDoorAngle()+.05;angle+=.05)if(leafBlocks(p,angle))return false;
+ function clearPath(from,to){
+  if(!allowed(from)||!allowed(to))return false;
+  const dx=to.x-from.x,dy=to.y-from.y,dz=to.z-from.z,count=stepsBetween(dx,dy,dz);
+  for(let i=1;i<count;i++){
+   const t=i/count;
+   if(!allowed({x:from.x+dx*t,y:from.y+dy*t,z:from.z+dz*t}))return false;
+  }
   return true;
  }
- function canCloseEntry(p){for(let a=0;a<=getEntryAngle()+.05;a+=.04)if(entryLeafBlocks(p,a))return false;return true;}
- return {move,constrain,allowed,inHallway,canClose,canCloseEntry,region:p=>inBox(p,GARDEN)?'garden':entryOpening(p)?'home entrance':inBox(p,PASSAGE)||nookOpening(p)?'reading room':inBox(p,HALL)?'hallway':doorway(p)&&p.z>10.02?'bedroom doorway':'bedroom'};
+ function rotateAround(p,delta,focus){
+  // A wall-mounted picture lies just beyond the camera clearance. Keep an
+  // orbit around it in the same room, even when its arc passes an open arch.
+  const room=[ROOM,HALL,PASSAGE].find(b=>inBox(p,b)&&
+   focus.x>=b.x0-2*RADIUS&&focus.x<=b.x1+2*RADIUS&&focus.z>=b.z0-2*RADIUS&&focus.z<=b.z1+2*RADIUS);
+  if(!room)return move(p,delta);
+  move(p,{x:clamp(p.x+delta.x,room.x0,room.x1)-p.x,y:delta.y,z:clamp(p.z+delta.z,room.z0,room.z1)-p.z});
+  p.x=clamp(p.x,room.x0,room.x1);p.z=clamp(p.z,room.z0,room.z1);
+  return p;
+ }
+ function swingClear(p,from,to,blocks){
+  const steps=Math.max(1,Math.ceil(Math.abs(to-from)/.04));
+  for(let i=1;i<=steps;i++)if(blocks(p,from+(to-from)*i/steps))return false;
+  return true;
+ }
+ function canClose(p,from=getDoorAngle(),to=0){
+  if(to<1.05&&to<from&&p.z>ROOM.z1&&p.z<HALL.z0&&doorway(p))return false;
+  return swingClear(p,from,to,leafBlocks);
+ }
+ function canCloseEntry(p,from=getEntryAngle(),to=0){
+  if(to<1.05&&to<from&&p.z>HALL.z1&&p.z<GARDEN.z0&&entryOpening(p))return false;
+  return swingClear(p,from,to,entryLeafBlocks);
+ }
+ return {move,rotateAround,constrain,clearPath,allowed,inHallway,canClose,canCloseEntry,region:p=>inBox(p,GARDEN)?'garden':entryOpening(p)?'home entrance':inBox(p,PASSAGE)||nookOpening(p)?'reading room':inBox(p,HALL)?'hallway':doorway(p)&&p.z>10.02?'bedroom doorway':'bedroom'};
 }

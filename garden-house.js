@@ -1,7 +1,7 @@
 import * as THREE from 'three/webgpu';
 import {housePalette,craft,archShape,archSurround,contactShadow} from './house-craft.js';
-import {createHomeEntrance} from './home-entrance.js';
-import {createReadingRoom} from './reading-room.js?revision=plush-portrait-1';
+import {createHomeEntrance} from './home-entrance.js?revision=camera-walls-1';
+import {createReadingRoom} from './reading-room.js?revision=garden-portrait-1';
 import {createPinkCarrotGarden} from './carrot-garden.js?revision=pink-carrot-garden-1';
 import {addFoyerFurniture} from './foyer-furniture.js?revision=foyer-sewn-2';
 
